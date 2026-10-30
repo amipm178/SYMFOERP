@@ -91,6 +91,7 @@ final class PurchaseOrderController extends AbstractController
         try {
             $em->getConnection()->transactional(function () use ($request, $order, $em): void {
                 $em->lock($order, LockMode::PESSIMISTIC_WRITE);
+                $em->refresh($order);
                 if (!in_array($order->getStatus(), [PurchaseOrder::STATUS_SENT, PurchaseOrder::STATUS_PARTIALLY_RECEIVED], true)) {
                     throw new InvalidArgumentException('Cette commande ne peut plus être réceptionnée.');
                 }
