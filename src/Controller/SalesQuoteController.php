@@ -67,7 +67,8 @@ final class SalesQuoteController extends AbstractController
                 'notes' => (string) $request->request->get('notes', ''),
             ];
             $submittedLines = $request->request->all('lines');
-            $lineValues = array_slice($submittedLines, 0, 10);
+            // Normalize attacker-controlled form keys before using them as line positions.
+            $lineValues = array_slice(array_values($submittedLines), 0, 10);
             if (!$this->isCsrfTokenValid('sales_quote_create', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
             }
