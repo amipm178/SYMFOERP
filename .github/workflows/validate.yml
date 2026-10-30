@@ -48,11 +48,11 @@ jobs:
           }
           trap cleanup EXIT
           for attempt in $(seq 1 30); do
-            if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
-              grep -q "Tiers &amp; CRM\\|Tiers & CRM" /tmp/symfoerp-home.html
+            if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/login --output /tmp/symfoerp-login.html; then
+              grep -q "Connexion" /tmp/symfoerp-login.html
               curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/healthz --output /tmp/symfoerp-health.json
               grep -q '"status":"ok"' /tmp/symfoerp-health.json
-              echo "Symfony dashboard and health endpoint responded successfully."
+              echo "Symfony login page and public health endpoint responded successfully."
               exit 0
             fi
             sleep 2
@@ -61,19 +61,43 @@ jobs:
           echo "Symfony HTTP smoke test failed." >&2
           exit 1
 
-      - name: Apply and validate Symfony database migration
+      - name: Apply migrations and test authenticated third-party access
         run: |
           set -eu
           docker compose --env-file .env.docker up --detach symfony
           docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:migrations:migrate --no-interaction
           docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:schema:validate
-          if ! curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/third-parties --output /tmp/symfoerp-third-parties.html; then
-            docker compose --env-file .env.docker logs symfony
-            docker compose --env-file .env.docker exec --no-TTY symfony sh -lc 'tail -n 100 var/log/dev.log || true'
-            exit 1
-          fi
-          grep -q "Aucun tiers enregistré dans Symfony" /tmp/symfoerp-third-parties.html
-          echo "Symfony third-party list rendered successfully."
+          docker compose --env-file .env.docker exec --no-TTY -e SYMFOERP_ADMIN_EMAIL=ci-admin@example.test -e SYMFOERP_ADMIN_PASSWORD=CI-Only-Password-2026 symfony php bin/console app:user:create
+          python3 - <<'PY'
+          import http.cookiejar
+          import urllib.parse
+          import urllib.request
+          from html.parser import HTMLParser
+
+          base = "http://127.0.0.1:8000"
+          class TokenParser(HTMLParser):
+              token = None
+              def handle_starttag(self, tag, attrs):
+                  values = dict(attrs)
+                  if tag == "input" and values.get("name") == "_csrf_token":
+                      self.token = values.get("value")
+
+          cookies = http.cookiejar.CookieJar()
+          client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookies))
+          protected = client.open(base + "/third-parties")
+          assert protected.geturl().endswith("/login"), "Unauthenticated request was not redirected to login"
+          login_page = client.open(base + "/login").read().decode()
+          parser = TokenParser()
+          parser.feed(login_page)
+          assert parser.token, "Login CSRF token is missing"
+          payload = urllib.parse.urlencode({"email": "ci-admin@example.test", "password": "CI-Only-Password-2026", "_csrf_token": parser.token}).encode()
+          client.open(urllib.request.Request(base + "/login", data=payload)).read()
+          registry = client.open(base + "/third-parties")
+          html = registry.read().decode()
+          assert registry.geturl().endswith("/third-parties"), "Authenticated user could not access third parties"
+          assert "Aucun tiers enregistré dans Symfony" in html, "Empty third-party registry did not render"
+          print("Symfony login, session, CSRF and protected third-party registry passed.")
+          PY
 
       - name: Smoke test fresh Dolibarr installation
         run: |
