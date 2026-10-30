@@ -96,7 +96,14 @@ jobs:
           html = registry.read().decode()
           assert registry.geturl().endswith("/third-parties"), "Authenticated user could not access third parties"
           assert "Aucun tiers enregistré dans Symfony" in html, "Empty third-party registry did not render"
-          print("Symfony login, session, CSRF and protected third-party registry passed.")
+          logout_parser = TokenParser()
+          logout_parser.feed(html)
+          assert logout_parser.token, "Logout CSRF token is missing"
+          logout_payload = urllib.parse.urlencode({"_csrf_token": logout_parser.token}).encode()
+          client.open(urllib.request.Request(base + "/logout", data=logout_payload)).read()
+          after_logout = client.open(base + "/third-parties")
+          assert after_logout.geturl().endswith("/login"), "Logout did not invalidate the authenticated session"
+          print("Symfony login, logout, session, CSRF and protected third-party registry passed.")
           PY
 
       - name: Smoke test fresh Dolibarr installation
