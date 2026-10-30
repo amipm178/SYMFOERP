@@ -48,7 +48,7 @@ L'image officielle Dolibarr est configurée pour initialiser automatiquement une
 
 ## Intégration continue
 
-Le workflow [Validate application](.github/workflows/validate.yml) s'exécute sur chaque push vers `main`, sur les Pull Requests et manuellement. Il vérifie la syntaxe de la configuration Compose, construit l'image Symfony puis démarre temporairement cette image pour vérifier que le tableau de bord répond en HTTP.
+Le workflow [Validate application](.github/workflows/validate.yml) s'exécute sur chaque push vers `main`, sur les Pull Requests et manuellement. Il vérifie la configuration Compose, construit l'image Symfony, contrôle la syntaxe PHP des sources puis démarre temporairement cette image pour vérifier que le tableau de bord répond en HTTP.
 
 ## Persistance
 
