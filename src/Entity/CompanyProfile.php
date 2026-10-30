@@ -67,6 +67,9 @@ class CompanyProfile
     #[ORM\Column(name: 'vat_regime_note', length: 255, nullable: true)]
     private ?string $vatRegimeNote = null;
 
+    #[ORM\Column(name: 'payment_delay_days', type: 'integer', options: ['default' => 30])]
+    private int $paymentDelayDays = 30;
+
     #[ORM\Column(name: 'updated_at', type: 'datetime_immutable')]
     private DateTimeImmutable $updatedAt;
 
@@ -90,6 +93,7 @@ class CompanyProfile
     public function getLatePenaltyRate(): ?string { return $this->latePenaltyRate; }
     public function getRecoveryFee(): ?string { return $this->recoveryFee; }
     public function getVatRegimeNote(): ?string { return $this->vatRegimeNote; }
+    public function getPaymentDelayDays(): int { return $this->paymentDelayDays; }
 
     public function update(array $data): self
     {
@@ -120,6 +124,9 @@ class CompanyProfile
         $this->latePenaltyRate = trim((string) ($data['latePenaltyRate'] ?? '')) ?: null;
         $this->recoveryFee = trim((string) ($data['recoveryFee'] ?? '')) ?: null;
         $this->vatRegimeNote = trim((string) ($data['vatRegimeNote'] ?? '')) ?: null;
+        $delay = filter_var($data['paymentDelayDays'] ?? 30, FILTER_VALIDATE_INT);
+        if ($delay === false || $delay < 0 || $delay > 365) { throw new InvalidArgumentException('Le délai de paiement doit être compris entre 0 et 365 jours.'); }
+        $this->paymentDelayDays = $delay;
         $this->updatedAt = new DateTimeImmutable();
         return $this;
     }
@@ -135,6 +142,6 @@ class CompanyProfile
 
     public function toInvoiceSnapshot(): array
     {
-        return ['legal_name'=>$this->legalName,'address'=>$this->address,'postal_code'=>$this->postalCode,'city'=>$this->city,'country'=>$this->country,'siren'=>$this->siren,'siret'=>$this->siret,'vat_number'=>$this->vatNumber,'legal_form'=>$this->legalForm,'share_capital'=>$this->shareCapital,'rcs_city'=>$this->rcsCity,'email'=>$this->email,'phone'=>$this->phone,'payment_terms'=>$this->paymentTerms,'late_penalty_rate'=>$this->latePenaltyRate,'recovery_fee'=>$this->recoveryFee,'vat_regime_note'=>$this->vatRegimeNote];
+        return ['legal_name'=>$this->legalName,'address'=>$this->address,'postal_code'=>$this->postalCode,'city'=>$this->city,'country'=>$this->country,'siren'=>$this->siren,'siret'=>$this->siret,'vat_number'=>$this->vatNumber,'legal_form'=>$this->legalForm,'share_capital'=>$this->shareCapital,'rcs_city'=>$this->rcsCity,'email'=>$this->email,'phone'=>$this->phone,'payment_terms'=>$this->paymentTerms,'late_penalty_rate'=>$this->latePenaltyRate,'recovery_fee'=>$this->recoveryFee,'vat_regime_note'=>$this->vatRegimeNote,'payment_delay_days'=>$this->paymentDelayDays];
     }
 }
