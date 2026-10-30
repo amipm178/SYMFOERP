@@ -55,6 +55,15 @@ class CompanyProfile
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $phone = null;
 
+    #[ORM\Column(name: 'payment_terms', length: 255, nullable: true)]
+    private ?string $paymentTerms = null;
+
+    #[ORM\Column(name: 'late_penalty_rate', length: 40, nullable: true)]
+    private ?string $latePenaltyRate = null;
+
+    #[ORM\Column(name: 'recovery_fee', length: 20, nullable: true)]
+    private ?string $recoveryFee = null;
+
     #[ORM\Column(name: 'updated_at', type: 'datetime_immutable')]
     private DateTimeImmutable $updatedAt;
 
@@ -74,6 +83,9 @@ class CompanyProfile
     public function getRcsCity(): ?string { return $this->rcsCity; }
     public function getEmail(): ?string { return $this->email; }
     public function getPhone(): ?string { return $this->phone; }
+    public function getPaymentTerms(): ?string { return $this->paymentTerms; }
+    public function getLatePenaltyRate(): ?string { return $this->latePenaltyRate; }
+    public function getRecoveryFee(): ?string { return $this->recoveryFee; }
 
     public function update(array $data): self
     {
@@ -100,6 +112,9 @@ class CompanyProfile
         $this->rcsCity = trim((string) ($data['rcsCity'] ?? '')) ?: null;
         $this->email = trim((string) ($data['email'] ?? '')) ?: null;
         $this->phone = trim((string) ($data['phone'] ?? '')) ?: null;
+        $this->paymentTerms = trim((string) ($data['paymentTerms'] ?? '')) ?: null;
+        $this->latePenaltyRate = trim((string) ($data['latePenaltyRate'] ?? '')) ?: null;
+        $this->recoveryFee = trim((string) ($data['recoveryFee'] ?? '')) ?: null;
         $this->updatedAt = new DateTimeImmutable();
         return $this;
     }
@@ -109,11 +124,12 @@ class CompanyProfile
         $errors = [];
         if ($this->legalName === '' || $this->address === '' || $this->postalCode === '' || $this->city === '' || $this->country === '') { $errors[] = 'Identité et adresse du vendeur incomplètes.'; }
         if ($this->siren === null || $this->siret === null) { $errors[] = 'SIREN et SIRET du vendeur requis.'; }
+        if ($this->paymentTerms === null || $this->latePenaltyRate === null || $this->recoveryFee === null) { $errors[] = 'Conditions de paiement, taux des pénalités de retard et indemnité de recouvrement à configurer.'; }
         return $errors;
     }
 
     public function toInvoiceSnapshot(): array
     {
-        return ['legal_name'=>$this->legalName,'address'=>$this->address,'postal_code'=>$this->postalCode,'city'=>$this->city,'country'=>$this->country,'siren'=>$this->siren,'siret'=>$this->siret,'vat_number'=>$this->vatNumber,'legal_form'=>$this->legalForm,'share_capital'=>$this->shareCapital,'rcs_city'=>$this->rcsCity,'email'=>$this->email,'phone'=>$this->phone];
+        return ['legal_name'=>$this->legalName,'address'=>$this->address,'postal_code'=>$this->postalCode,'city'=>$this->city,'country'=>$this->country,'siren'=>$this->siren,'siret'=>$this->siret,'vat_number'=>$this->vatNumber,'legal_form'=>$this->legalForm,'share_capital'=>$this->shareCapital,'rcs_city'=>$this->rcsCity,'email'=>$this->email,'phone'=>$this->phone,'payment_terms'=>$this->paymentTerms,'late_penalty_rate'=>$this->latePenaltyRate,'recovery_fee'=>$this->recoveryFee];
     }
 }
