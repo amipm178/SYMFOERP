@@ -21,7 +21,7 @@ Pendant cette première phase, Dolibarr démarre avec son runtime officiel dans 
 ## Installation neuve
 
 ```bash
-git clone https://github.com/amipm178/SYMFOERP.git
+git clone https://github.com/claudeia206/SYMFOERP.git
 cd SYMFOERP
 git submodule update --init --recursive
 cp .env.docker.example .env.docker
