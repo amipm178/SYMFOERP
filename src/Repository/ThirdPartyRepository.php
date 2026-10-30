@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\ThirdParty;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -34,9 +35,32 @@ final class ThirdPartyRepository extends ServiceEntityRepository
     /**
      * @return list<ThirdParty>
      */
-    public function search(string $term = '', string $category = ''): array
+    public function search(string $term = '', string $category = '', int $page = 1, int $perPage = 25): array
+    {
+        $page = max(1, $page);
+        $perPage = max(1, min($perPage, 100));
+
+        return $this->createFilteredQuery($term, $category)
+            ->orderBy('thirdParty.name', 'ASC')
+            ->addOrderBy('thirdParty.id', 'ASC')
+            ->setFirstResult(($page - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countSearchResults(string $term = '', string $category = ''): int
+    {
+        return (int) $this->createFilteredQuery($term, $category)
+            ->select('COUNT(thirdParty.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    private function createFilteredQuery(string $term, string $category): QueryBuilder
     {
         $query = $this->createQueryBuilder('thirdParty');
+
         if ($term !== '') {
             $query->andWhere($query->expr()->orX(
                 'LOWER(thirdParty.name) LIKE :term',
@@ -44,6 +68,7 @@ final class ThirdPartyRepository extends ServiceEntityRepository
                 'LOWER(thirdParty.phone) LIKE :term'
             ))->setParameter('term', '%'.mb_strtolower($term).'%');
         }
+
         if (in_array($category, [
             ThirdParty::CATEGORY_CUSTOMER,
             ThirdParty::CATEGORY_PROSPECT,
@@ -52,10 +77,6 @@ final class ThirdPartyRepository extends ServiceEntityRepository
             $query->andWhere('thirdParty.category = :category')->setParameter('category', $category);
         }
 
-        return $query
-            ->orderBy('thirdParty.name', 'ASC')
-            ->setMaxResults(100)
-            ->getQuery()
-            ->getResult();
+        return $query;
     }
 }
