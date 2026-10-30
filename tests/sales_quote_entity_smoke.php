@@ -7,6 +7,7 @@ use App\Entity\SalesQuoteLine;
 use App\Entity\SalesOrder;
 use App\Entity\ThirdParty;
 use App\Entity\Product;
+use App\Entity\ProductStockMovement;
 
 require dirname(__DIR__).'/vendor/autoload.php';
 
@@ -45,7 +46,7 @@ expectSales($order->getTotalIncludingTax() === $quote->getTotalIncludingTax(), '
 $order->setStatus(SalesOrder::STATUS_FULFILLED);
 expectSales($order->getStatus() === SalesOrder::STATUS_FULFILLED, 'Order status must transition to fulfilled.');
 $catalogProduct->adjustStock('-2');
-$saleMovement = new \\App\\Entity\\ProductStockMovement($catalogProduct, '-2', 'sale', 'Livraison commande de test');
+$saleMovement = new ProductStockMovement($catalogProduct, '-2', 'sale', 'Livraison commande de test');
 expectSales($catalogProduct->getStockQuantity() === '8.000', 'A tracked-product sale must reduce available stock.');
 expectSales($saleMovement->getReason() === 'sale' && $saleMovement->getQuantity() === '-2.000', 'Sales stock movement must record a negative quantity.');
 try {
