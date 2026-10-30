@@ -42,9 +42,6 @@ jobs:
       - name: Test sales quote entity and totals
         run: docker run --rm symfoerp-symfony:ci php tests/sales_quote_entity_smoke.php
 
-      - name: Test sales invoice draft entity and totals
-        run: docker run --rm symfoerp-symfony:ci php tests/sales_invoice_entity_smoke.php
-
       - name: Test sales invoice payment rules
         run: docker run --rm symfoerp-symfony:ci php tests/sales_invoice_entity_smoke.php
 
