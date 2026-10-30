@@ -20,10 +20,11 @@ function expectSales(bool $condition, string $message): void
 $customer = new ThirdParty('Client de test', ThirdParty::CATEGORY_CUSTOMER);
 $quote = new SalesQuote($customer);
 $catalogProduct = new Product('SKU-CONSEIL', 'Prestation de conseil');
-$catalogProduct->update(['sku'=>'SKU-CONSEIL','name'=>'Prestation de conseil','unit'=>'heure','purchase_price'=>'20','sale_price'=>'50','vat_rate'=>'20','stock_tracked'=>'0','stock_alert_threshold'=>'0','active'=>'1']);
+$catalogProduct->update(['sku'=>'SKU-CONSEIL','name'=>'Prestation de conseil','unit'=>'heure','purchase_price'=>'20','sale_price'=>'50','vat_rate'=>'20','stock_tracked'=>'1','stock_alert_threshold'=>'0','active'=>'1']);
 $catalogLine = new SalesQuoteLine('Prestation de conseil', '2', '50.00', '20.00', 1);
 $catalogLine->setProduct($catalogProduct);
 $quote->addLine($catalogLine);
+$catalogProduct->adjustStock('10');
 $quote->addLine(new SalesQuoteLine('Frais de dossier', '1', '10.00', '0.00', 2));
 
 expectSales($quote->getStatus() === SalesQuote::STATUS_DRAFT, 'New quotes must start as drafts.');
@@ -43,6 +44,10 @@ expectSales($order->getTotalTax() === $quote->getTotalTax(), 'Converted order VA
 expectSales($order->getTotalIncludingTax() === $quote->getTotalIncludingTax(), 'Converted order total must match the accepted quote.');
 $order->setStatus(SalesOrder::STATUS_FULFILLED);
 expectSales($order->getStatus() === SalesOrder::STATUS_FULFILLED, 'Order status must transition to fulfilled.');
+$catalogProduct->adjustStock('-2');
+$saleMovement = new \\App\\Entity\\ProductStockMovement($catalogProduct, '-2', 'sale', 'Livraison commande de test');
+expectSales($catalogProduct->getStockQuantity() === '8.000', 'A tracked-product sale must reduce available stock.');
+expectSales($saleMovement->getReason() === 'sale' && $saleMovement->getQuantity() === '-2.000', 'Sales stock movement must record a negative quantity.');
 try {
     new SalesOrder(new SalesQuote($customer));
     throw new RuntimeException('A draft quote was converted into an order.');
