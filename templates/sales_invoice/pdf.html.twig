@@ -41,6 +41,7 @@ table.lines { width: 100%; border-collapse: collapse; margin-top: 20px; }
         <tr><td><strong>Total TTC</strong></td><td style="text-align:right"><strong>{{ invoice.totalIncludingTax|number_format(2, ',', ' ') }} €</strong></td></tr>
     </table>
     <div class="legal">
+        <p><strong>TVA :</strong> {{ seller.vat_regime_note }}</p>
         <p><strong>Conditions de paiement :</strong> {{ seller.payment_terms }}</p>
         <p><strong>Pénalités de retard :</strong> {{ seller.late_penalty_rate }}</p>
         <p><strong>Indemnité forfaitaire de recouvrement :</strong> {{ seller.recovery_fee }} € (si applicable).</p>
