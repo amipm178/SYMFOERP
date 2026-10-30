@@ -50,6 +50,7 @@ final class SalesOrderController extends AbstractController
         try {
             $entityManager->getConnection()->transactional(function () use ($target, $order, $entityManager): void {
                 $entityManager->lock($order, LockMode::PESSIMISTIC_WRITE);
+                $entityManager->refresh($order);
                 if (!in_array($target, $this->allowedActions($order->getStatus()), true)) {
                     throw new InvalidArgumentException('Cette transition de statut n’est plus autorisée.');
                 }
