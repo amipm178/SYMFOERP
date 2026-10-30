@@ -91,6 +91,14 @@ class SalesOrder
     public function getSourceQuote(): SalesQuote { return $this->sourceQuote; }
     public function getCustomer(): ThirdParty { return $this->customer; }
     public function getStatus(): string { return $this->status; }
+    public function setStatus(string $status): self
+    {
+        if (!in_array($status, [self::STATUS_OPEN, self::STATUS_FULFILLED, self::STATUS_CANCELLED], true)) {
+            throw new InvalidArgumentException('Unsupported order status.');
+        }
+        $this->status = $status;
+        return $this;
+    }
     public function getOrderDate(): DateTimeImmutable { return $this->orderDate; }
     public function getNotes(): ?string { return $this->notes; }
     public function addLine(SalesOrderLine $line): self
