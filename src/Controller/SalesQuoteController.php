@@ -75,7 +75,11 @@ final class SalesQuoteController extends AbstractController
                 if ($values['valid_until'] === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $values['valid_until'])) {
                     throw new \InvalidArgumentException('Invalid date format.');
                 }
-                $validUntil = new DateTimeImmutable($values['valid_until']);
+                $validUntil = DateTimeImmutable::createFromFormat('!Y-m-d', $values['valid_until']);
+                $dateErrors = DateTimeImmutable::getLastErrors();
+                if ($validUntil === false || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))) {
+                    throw new \\InvalidArgumentException('Invalid calendar date.');
+                }
                 if ($validUntil < new DateTimeImmutable('today')) {
                     $errors[] = 'La date de validité doit être aujourd’hui ou ultérieure.';
                 }
