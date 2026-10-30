@@ -193,10 +193,11 @@ final class SalesQuoteController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_sales_quote_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
-    public function show(SalesQuote $quote): Response
+    public function show(SalesQuote $quote, SalesOrderRepository $orders): Response
     {
         return $this->render('sales_quote/show.html.twig', [
             'quote' => $quote,
+            'order' => $orders->findOneBy(['sourceQuote' => $quote]),
             'statuses' => self::STATUSES,
             'allowed_actions' => $this->allowedActions($quote->getStatus()),
         ]);
