@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Repository;
+namespace App\\Repository;
 
-use App\Entity\ThirdParty;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
-use Doctrine\Persistence\ManagerRegistry;
+use App\\Entity\\ThirdParty;
+use Doctrine\\Bundle\\DoctrineBundle\\Repository\\ServiceEntityRepository;
+use Doctrine\\ORM\\QueryBuilder;
+use Doctrine\\Persistence\\ManagerRegistry;
 
 /**
  * @extends ServiceEntityRepository<ThirdParty>
@@ -29,5 +30,22 @@ final class ThirdPartyRepository extends ServiceEntityRepository
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * @return list<ThirdParty>
+     */
+    public function search(string $term = '', string $category = ''): array
+    {
+        $query = $this->createQueryBuilder('thirdParty');
+        if ($term !== '') {
+            $query->andWhere('LOWER(thirdParty.name) LIKE :term OR LOWER(thirdParty.email) LIKE :term OR LOWER(thirdParty.phone) LIKE :term')
+                ->setParameter('term', '%'.mb_strtolower($term).'%');
+        }
+        if (in_array($category, [ThirdParty::CATEGORY_CUSTOMER, ThirdParty::CATEGORY_PROSPECT, ThirdParty::CATEGORY_SUPPLIER], true)) {
+            $query->andWhere('thirdParty.category = :category')->setParameter('category', $category);
+        }
+
+        return $query->orderBy('thirdParty.name', 'ASC')->getQuery()->getResult();
     }
 }
