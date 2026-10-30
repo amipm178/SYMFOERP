@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tiers · SYMFOERP{% endblock %}
+
+{% block body %}
+    <p class="muted">GESTION COMMERCIALE</p>
+    <h1>Tiers</h1>
+    <p class="muted">Clients, prospects et fournisseurs enregistrés dans SYMFOERP.</p>
+
+    <section class="card" aria-label="Liste des tiers">
+        {% if third_parties is empty %}
+            <p>Aucun tiers enregistré dans Symfony.</p>
+            <p class="muted">La base Symfony est prête à recevoir ses premières fiches.</p>
+        {% else %}
+            {% set categories = {
+                'customer': 'Client',
+                'prospect': 'Prospect',
+                'supplier': 'Fournisseur'
+            } %}
+            <div class="table-scroll">
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Catégorie</th>
+                        <th scope="col">E-mail</th>
+                        <th scope="col">Téléphone</th>
+                        <th scope="col">Créé le</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for third_party in third_parties %}
+                        <tr>
+                            <td>{{ third_party.name }}</td>
+                            <td>{{ categories[third_party.category] ?? third_party.category }}</td>
+                            <td>{% if third_party.email %}<a href="mailto:{{ third_party.email }}">{{ third_party.email }}</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+                            <td>{{ third_party.phone ?? '—' }}</td>
+                            <td>{{ third_party.createdAt|date('d/m/Y') }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="muted">Affichage des {{ third_parties|length }} fiches les plus récentes (maximum 20).</p>
+        {% endif %}
+    </section>
+{% endblock %}
