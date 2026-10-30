@@ -46,7 +46,7 @@ final class CreateUserCommand extends Command
 
         try {
             $user = new User($email);
-        } catch (\\InvalidArgumentException $exception) {
+        } catch (\InvalidArgumentException $exception) {
             $io->error($exception->getMessage());
             return Command::INVALID;
         }
