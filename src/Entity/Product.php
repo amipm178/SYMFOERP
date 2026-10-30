@@ -78,6 +78,7 @@ class Product
     public function getStockQuantity(): string { return $this->stockQuantity; }
     public function getStockAlertThreshold(): string { return $this->stockAlertThreshold; }
     public function isActive(): bool { return $this->active; }
+    public function setActive(bool $active): self { $this->active = $active; $this->updatedAt = new DateTimeImmutable(); return $this; }
     public function getCreatedAt(): DateTimeImmutable { return $this->createdAt; }
     public function isLowStock(): bool { return $this->stockTracked && (float) $this->stockQuantity <= (float) $this->stockAlertThreshold; }
 
