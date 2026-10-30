@@ -45,6 +45,21 @@ try {
     // Expected validation failure.
 }
 
+
+foreach ([
+    fn () => $thirdParty->setName(str_repeat('A', 181)),
+    fn () => $thirdParty->setEmail('invalid-email'),
+    fn () => $thirdParty->setEmail(str_repeat('a', 170).'@example.test'),
+    fn () => $thirdParty->setPhone(str_repeat('1', 41)),
+] as $invalidSetter) {
+    try {
+        $invalidSetter();
+        throw new RuntimeException('An invalid third-party field value was accepted.');
+    } catch (InvalidArgumentException) {
+        // Expected validation failure.
+    }
+}
+
 $user = new User('  ADMIN@EXAMPLE.TEST ');
 expect($user->getEmail() === 'admin@example.test', 'User email must be normalized.');
 expect(in_array('ROLE_USER', $user->getRoles(), true), 'Every user must receive ROLE_USER.');
