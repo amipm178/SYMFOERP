@@ -41,8 +41,20 @@ final class ThirdPartyController extends AbstractController
     {
         $thirdParty = new ThirdParty('À renseigner');
         $errors = [];
+        $formValues = [
+            'name' => $thirdParty->getName(),
+            'category' => $thirdParty->getCategory(),
+            'email' => '',
+            'phone' => '',
+        ];
 
         if ($request->isMethod('POST')) {
+            $formValues = [
+                'name' => (string) $request->request->get('name', ''),
+                'category' => (string) $request->request->get('category', ''),
+                'email' => (string) $request->request->get('email', ''),
+                'phone' => (string) $request->request->get('phone', ''),
+            ];
             if (!$this->isCsrfTokenValid('third_party_create', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
             }
@@ -60,6 +72,7 @@ final class ThirdPartyController extends AbstractController
 
         return $this->render('third_party/form.html.twig', [
             'third_party' => $thirdParty,
+            'form_values' => $formValues,
             'errors' => $errors,
             'csrf_token_id' => 'third_party_create',
             'is_edit' => false,
@@ -77,8 +90,20 @@ final class ThirdPartyController extends AbstractController
     {
         $tokenId = 'third_party_edit_'.$thirdParty->getId();
         $errors = [];
+        $formValues = [
+            'name' => $thirdParty->getName(),
+            'category' => $thirdParty->getCategory(),
+            'email' => $thirdParty->getEmail() ?? '',
+            'phone' => $thirdParty->getPhone() ?? '',
+        ];
 
         if ($request->isMethod('POST')) {
+            $formValues = [
+                'name' => (string) $request->request->get('name', ''),
+                'category' => (string) $request->request->get('category', ''),
+                'email' => (string) $request->request->get('email', ''),
+                'phone' => (string) $request->request->get('phone', ''),
+            ];
             if (!$this->isCsrfTokenValid($tokenId, (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
             }
@@ -94,6 +119,7 @@ final class ThirdPartyController extends AbstractController
 
         return $this->render('third_party/form.html.twig', [
             'third_party' => $thirdParty,
+            'form_values' => $formValues,
             'errors' => $errors,
             'csrf_token_id' => $tokenId,
             'is_edit' => true,
