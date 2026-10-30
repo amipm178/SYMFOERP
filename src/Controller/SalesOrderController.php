@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\SalesOrder;
+use App\Entity\ProductStockMovement;
 use App\Repository\SalesOrderRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\LockMode;
+use InvalidArgumentException;
 use Symfony\Component\Routing\Attribute\Route;
 
 #[Route('/sales/orders')]
