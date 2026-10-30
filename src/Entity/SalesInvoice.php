@@ -110,7 +110,7 @@ class SalesInvoice
     public function getSellerSnapshot(): ?array { return $this->sellerSnapshot; }
     public function getCustomerSnapshot(): ?array { return $this->customerSnapshot; }
 
-    public function issue(string $number, DateTimeImmutable $issuedAt, array $sellerSnapshot, array $customerSnapshot): self
+    public function issue(string $number, DateTimeImmutable $issuedAt, DateTimeImmutable $dueDate, array $sellerSnapshot, array $customerSnapshot): self
     {
         if ($this->status !== self::STATUS_DRAFT || $this->number !== null) {
             throw new InvalidArgumentException('Only a draft invoice can be issued once.');
@@ -124,6 +124,7 @@ class SalesInvoice
         $this->number = $number;
         $this->issuedAt = $issuedAt;
         $this->invoiceDate = $issuedAt;
+        $this->dueDate = $dueDate;
         $this->sellerSnapshot = $sellerSnapshot;
         $this->customerSnapshot = $customerSnapshot;
         $this->status = self::STATUS_ISSUED;
