@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ is_edit ? 'Modifier' : 'Nouveau' }} tiers · SYMFOERP{% endblock %}
+
+{% block body %}
+    <p class="muted">GESTION COMMERCIALE</p>
+    <h1>{{ is_edit ? 'Modifier le tiers' : 'Créer un tiers' }}</h1>
+    <p><a href="{{ is_edit ? path('app_third_party_show', {id: third_party.id}) : path('app_third_parties') }}">← Retour</a></p>
+
+    {% if errors is not empty %}
+        <section class="card" role="alert">
+            <strong>Veuillez corriger les erreurs suivantes :</strong>
+            <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </section>
+    {% endif %}
+
+    <section class="card">
+        <form method="post">
+            <input type="hidden" name="_token" value="{{ form_token }}">
+            <p>
+                <label for="name">Nom / raison sociale *</label>
+                <input id="name" name="name" type="text" maxlength="180" required value="{{ third_party.name }}">
+            </p>
+            <p>
+                <label for="category">Catégorie *</label>
+                <select id="category" name="category" required>
+                    <option value="customer" {% if third_party.category == 'customer' %}selected{% endif %}>Client</option>
+                    <option value="prospect" {% if third_party.category == 'prospect' %}selected{% endif %}>Prospect</option>
+                    <option value="supplier" {% if third_party.category == 'supplier' %}selected{% endif %}>Fournisseur</option>
+                </select>
+            </p>
+            <p>
+                <label for="email">E-mail</label>
+                <input id="email" name="email" type="email" maxlength="180" value="{{ third_party.email ?? '' }}">
+            </p>
+            <p>
+                <label for="phone">Téléphone</label>
+                <input id="phone" name="phone" type="tel" maxlength="40" value="{{ third_party.phone ?? '' }}">
+            </p>
+            <button type="submit">{{ is_edit ? 'Enregistrer les modifications' : 'Créer le tiers' }}</button>
+        </form>
+    </section>
+{% endblock %}
