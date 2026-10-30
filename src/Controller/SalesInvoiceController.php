@@ -92,7 +92,9 @@ final class SalesInvoiceController extends AbstractController
                     [$year]
                 );
                 $sequence = (int) $connection->fetchOne('SELECT last_number FROM app_invoice_sequence WHERE fiscal_year = ? FOR UPDATE', [$year]);
-                $invoice->issue(sprintf('FAC-%d-%06d', $year, $sequence), new DateTimeImmutable('now'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+                $issuedAt = new DateTimeImmutable('now');
+                $dueDate = $issuedAt->modify(sprintf('+%d days', $profile->getPaymentDelayDays()));
+                $invoice->issue(sprintf('FAC-%d-%06d', $year, $sequence), $issuedAt, $dueDate, $profile->toInvoiceSnapshot(), $customerSnapshot);
                 $entityManager->flush();
             });
             $this->addFlash('success', 'La facture a été émise et numérotée.');
