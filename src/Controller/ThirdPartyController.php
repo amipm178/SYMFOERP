@@ -29,7 +29,7 @@ final class ThirdPartyController extends AbstractController
     #[Route('/third-parties/new', name: 'app_third_party_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $thirdParty = new ThirdParty('');
+        $thirdParty = new ThirdParty('À renseigner');
         $errors = [];
 
         if ($request->isMethod('POST')) {
@@ -59,7 +59,7 @@ final class ThirdPartyController extends AbstractController
     #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function show(ThirdParty $thirdParty): Response
     {
-        return $this->render('third_party/show.html.twig', ['third_party' => $thirdParty]);
+        return $this->render('third_party/show.html.twig', [\n            'third_party' => $thirdParty,\n            'delete_token' => $this->csrfToken($this->container->get('request_stack')->getCurrentRequest(), 'third_party_delete_'.$thirdParty->getId()),\n        ]);
     }
 
     #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
