@@ -21,6 +21,10 @@ class SalesInvoiceLine
     #[ORM\JoinColumn(name: 'invoice_id', nullable: false, onDelete: 'CASCADE')]
     private ?SalesInvoice $invoice = null;
 
+    #[ORM\ManyToOne(targetEntity: Product::class)]
+    #[ORM\JoinColumn(name: 'product_id', nullable: true, onDelete: 'RESTRICT')]
+    private ?Product $product = null;
+
     #[ORM\Column(length: 255)]
     private string $description;
 
@@ -36,7 +40,7 @@ class SalesInvoiceLine
     #[ORM\Column]
     private int $position;
 
-    public function __construct(string $description, string $quantity, string $unitPrice, string $vatRate, int $position)
+    public function __construct(string $description, string $quantity, string $unitPrice, string $vatRate, int $position, ?Product $product = null)
     {
         $description = trim($description);
         if ($description === '' || mb_strlen($description) > 255) {
@@ -51,6 +55,7 @@ class SalesInvoiceLine
         if (!is_numeric($vatRate) || (float) $vatRate < 0 || (float) $vatRate > 100) {
             throw new InvalidArgumentException('Invoice line VAT rate is invalid.');
         }
+        $this->product = $product;
         $this->description = $description;
         $this->quantity = number_format((float) $quantity, 3, '.', '');
         $this->unitPrice = number_format((float) $unitPrice, 2, '.', '');
@@ -61,6 +66,7 @@ class SalesInvoiceLine
     public function getId(): ?int { return $this->id; }
     public function setInvoice(SalesInvoice $invoice): self { $this->invoice = $invoice; return $this; }
     public function getDescription(): string { return $this->description; }
+    public function getProduct(): ?Product { return $this->product; }
     public function getQuantity(): string { return $this->quantity; }
     public function getUnitPrice(): string { return $this->unitPrice; }
     public function getVatRate(): string { return $this->vatRate; }
