@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Entity\SalesQuote;
 use App\Entity\SalesQuoteLine;
+use App\Entity\SalesOrder;
 use App\Entity\ThirdParty;
 
 require dirname(__DIR__).'/vendor/autoload.php';
@@ -28,6 +29,18 @@ expectSales($quote->getTotalIncludingTax() === 130.0, 'The total including VAT m
 
 $quote->setStatus(SalesQuote::STATUS_SENT);
 expectSales($quote->getStatus() === SalesQuote::STATUS_SENT, 'Quote status must be mutable to a supported state.');
+$quote->setStatus(SalesQuote::STATUS_ACCEPTED);
+$order = new SalesOrder($quote);
+expectSales($order->getLines()->count() === 2, 'Order conversion must copy all quote lines.');
+expectSales($order->getTotalExcludingTax() === $quote->getTotalExcludingTax(), 'Converted order subtotal must match the accepted quote.');
+expectSales($order->getTotalTax() === $quote->getTotalTax(), 'Converted order VAT must match the accepted quote.');
+expectSales($order->getTotalIncludingTax() === $quote->getTotalIncludingTax(), 'Converted order total must match the accepted quote.');
+try {
+    new SalesOrder(new SalesQuote($customer));
+    throw new RuntimeException('A draft quote was converted into an order.');
+} catch (InvalidArgumentException) {
+    // Only accepted quotes may be converted.
+}
 
 try {
     $quote->setStatus('unknown');
