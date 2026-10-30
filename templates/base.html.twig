@@ -17,7 +17,7 @@
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
-<header><strong>SYMFOERP</strong><nav aria-label="Navigation principale"><a href="{{ path('app_dashboard') }}">Accueil</a><a href="{{ path('app_third_parties') }}">Tiers</a></nav></header>
+<header><strong>SYMFOERP</strong><nav aria-label="Navigation principale"><a href="{{ path('app_dashboard') }}">Accueil</a><a href="{{ path('app_third_parties') }}">Tiers</a>{% if app.user %}<span>{{ app.user.userIdentifier }}</span><a href="{{ path('app_logout') }}">Déconnexion</a>{% endif %}</nav></header>
 <main>{% block body %}{% endblock %}</main>
 <footer>SYMFOERP · Socle applicatif Symfony 7.4 LTS</footer>
 </body>
