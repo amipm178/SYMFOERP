@@ -68,9 +68,9 @@ Créez ensuite le premier administrateur. Le mot de passe est transmis uniquemen
 read -r -p "E-mail administrateur : " SYMFOERP_ADMIN_EMAIL
 read -r -s -p "Mot de passe (12 caractères minimum) : " SYMFOERP_ADMIN_PASSWORD
 echo
-docker compose --env-file .env.docker exec \\
-  -e SYMFOERP_ADMIN_EMAIL="$SYMFOERP_ADMIN_EMAIL" \\
-  -e SYMFOERP_ADMIN_PASSWORD="$SYMFOERP_ADMIN_PASSWORD" \\
+docker compose --env-file .env.docker exec \
+  -e SYMFOERP_ADMIN_EMAIL="$SYMFOERP_ADMIN_EMAIL" \
+  -e SYMFOERP_ADMIN_PASSWORD="$SYMFOERP_ADMIN_PASSWORD" \
   symfony php bin/console app:user:create
 unset SYMFOERP_ADMIN_EMAIL SYMFOERP_ADMIN_PASSWORD
 ```
