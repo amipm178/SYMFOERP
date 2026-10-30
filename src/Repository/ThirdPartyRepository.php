@@ -52,6 +52,10 @@ final class ThirdPartyRepository extends ServiceEntityRepository
             $query->andWhere('thirdParty.category = :category')->setParameter('category', $category);
         }
 
-        return $query->orderBy('thirdParty.name', 'ASC')->getQuery()->getResult();
+        return $query
+            ->orderBy('thirdParty.name', 'ASC')
+            ->setMaxResults(100)
+            ->getQuery()
+            ->getResult();
     }
 }
