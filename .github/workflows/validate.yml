@@ -64,7 +64,11 @@ jobs:
           docker compose --env-file .env.docker up --detach symfony
           docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:migrations:migrate --no-interaction
           docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:schema:validate
-          curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/third-parties --output /tmp/symfoerp-third-parties.html
+          if ! curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/third-parties --output /tmp/symfoerp-third-parties.html; then
+            docker compose --env-file .env.docker logs symfony
+            docker compose --env-file .env.docker exec --no-TTY symfony sh -lc 'tail -n 100 var/log/dev.log || true'
+            exit 1
+          fi
           grep -q "Aucun tiers enregistré dans Symfony" /tmp/symfoerp-third-parties.html
           echo "Symfony third-party list rendered successfully."
 
