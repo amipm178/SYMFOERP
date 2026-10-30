@@ -15,6 +15,7 @@ use DateTimeImmutable;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\LockMode;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -154,21 +155,25 @@ final class SalesQuoteController extends AbstractController
             throw $this->createAccessDeniedException('Seul un devis accepté peut être converti en commande.');
         }
 
-        $existing = $orders->findOneBy(['sourceQuote' => $quote]);
-        if ($existing instanceof SalesOrder) {
-            $this->addFlash('success', 'Ce devis a déjà été converti en commande.');
-            return $this->redirectToRoute('app_sales_order_show', ['id' => $existing->getId()]);
-        }
+        [$order, $created] = $entityManager->getConnection()->transactional(function () use ($entityManager, $orders, $quote): array {
+            $entityManager->lock($quote, LockMode::PESSIMISTIC_WRITE);
+            $existing = $orders->findOneBy(['sourceQuote' => $quote]);
+            if ($existing instanceof SalesOrder) {
+                return [$existing, false];
+            }
 
-        $order = new SalesOrder($quote);
-        $entityManager->getConnection()->transactional(static function () use ($entityManager, $order): void {
+            $order = new SalesOrder($quote);
             $entityManager->persist($order);
             $entityManager->flush();
             $order->assignNumber();
             $entityManager->flush();
+
+            return [$order, true];
         });
 
-        $this->addFlash('success', sprintf('La commande %s a été créée à partir du devis.', $order->getNumber()));
+        $this->addFlash('success', $created
+            ? sprintf('La commande %s a été créée à partir du devis.', $order->getNumber())
+            : 'Ce devis avait déjà été converti en commande.');
         return $this->redirectToRoute('app_sales_order_show', ['id' => $order->getId()]);
     }
 
