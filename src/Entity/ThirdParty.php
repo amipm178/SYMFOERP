@@ -8,10 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
 #[ORM\Entity(repositoryClass: ThirdPartyRepository::class)]
-#[ORM\Table(
-    name: 'app_third_party',
-    indexes: [new ORM\Index(name: 'idx_third_party_category_name', columns: ['category', 'name'])],
-)]
+#[ORM\Table(name: 'app_third_party')]
+#[ORM\Index(name: 'idx_third_party_category_name', columns: ['category', 'name'])]
 class ThirdParty
 {
     public const CATEGORY_CUSTOMER = 'customer';
