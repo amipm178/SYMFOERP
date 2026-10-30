@@ -64,7 +64,7 @@ Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé �
 
 Un devis accepté peut être converti en commande client. La commande reçoit un numéro `CMD-AAAA-000001` et conserve une copie indépendante des lignes, quantités, prix et taux de TVA du devis accepté. Une contrainte unique en base et un verrouillage transactionnel garantissent qu'un devis ne produit qu'une seule commande, y compris lors de conversions concurrentes. Une commande peut ensuite être terminée ou annulée ; ces transitions sont protégées par CSRF et les statuts terminaux ne sont pas réouverts depuis l'interface. Les vues de devis et de commandes sont accessibles depuis la navigation principale.
 
-Une commande peut produire une facture brouillon unique dans la V1. La facture copie indépendamment le client, les lignes, les quantités, les prix et les taux de TVA. Les adresses de facturation sont gérées sur les fiches tiers. La date d’échéance proposée est fixée à 30 jours. La création est idempotente et protégée par CSRF et verrouillage transactionnel.
+Une commande peut produire une facture brouillon unique dans la V1. La facture copie indépendamment le client, les lignes, les quantités, les prix et les taux de TVA. Les adresses de facturation sont gérées sur les fiches tiers. Le délai de paiement et la date d’échéance sont configurables dans les paramètres de l’entreprise. La création est idempotente et protégée par CSRF et verrouillage transactionnel.
 
 L’identité légale du vendeur se configure dans **Entreprise** : raison sociale, adresse, SIREN/SIRET, informations complémentaires et conditions de paiement. L’émission est bloquée tant que les champs requis du vendeur et l’adresse de facturation du client ne sont pas renseignés. Au moment de l’émission, SYMFOERP attribue un numéro annuel `FAC-AAAA-000001` au moyen d’un compteur verrouillé en base et fige les coordonnées du vendeur et du client dans la facture. Le PDF de facture n’est disponible qu’après émission. La mention de régime de TVA, les conditions de paiement, le taux de pénalité de retard et l’indemnité de recouvrement doivent être saisis et vérifiés par l’entreprise.
 
@@ -72,7 +72,7 @@ Le modèle de règlements accepte virement, carte, espèces, chèque ou autre, a
 
 **Important :** ces fonctions constituent un socle technique et ne valent pas certification de conformité fiscale ou comptable. Avant une utilisation réelle, faites valider les mentions et paramètres applicables à votre activité (notamment régime de TVA, forme juridique, RCS, pénalités et cas particuliers) par votre expert-comptable ou conseil. Une facture émise ne doit pas être modifiée ni supprimée par les opérations ordinaires de l’application.
 
-Les migrations `Version20261030140000` à `Version20261030181100` créent les tables de devis, commandes, factures, règlements, profil légal et compteur annuel dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
+Les migrations `Version20261030140000` à `Version20261030181200` créent les tables de devis, commandes, factures, règlements, profil légal et compteur annuel dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
 
 Après le démarrage Docker, initialisez le schéma Symfony avec :
 
