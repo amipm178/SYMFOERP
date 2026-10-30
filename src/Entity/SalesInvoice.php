@@ -54,6 +54,15 @@ class SalesInvoice
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $notes = null;
 
+    #[ORM\Column(name: 'issued_at', type: 'datetime_immutable', nullable: true)]
+    private ?DateTimeImmutable $issuedAt = null;
+
+    #[ORM\Column(name: 'seller_snapshot', type: 'json', nullable: true)]
+    private ?array $sellerSnapshot = null;
+
+    #[ORM\Column(name: 'customer_snapshot', type: 'json', nullable: true)]
+    private ?array $customerSnapshot = null;
+
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private DateTimeImmutable $createdAt;
 
@@ -97,6 +106,29 @@ class SalesInvoice
     public function getInvoiceDate(): DateTimeImmutable { return $this->invoiceDate; }
     public function getDueDate(): DateTimeImmutable { return $this->dueDate; }
     public function getNotes(): ?string { return $this->notes; }
+    public function getIssuedAt(): ?DateTimeImmutable { return $this->issuedAt; }
+    public function getSellerSnapshot(): ?array { return $this->sellerSnapshot; }
+    public function getCustomerSnapshot(): ?array { return $this->customerSnapshot; }
+
+    public function issue(string $number, DateTimeImmutable $issuedAt, array $sellerSnapshot, array $customerSnapshot): self
+    {
+        if ($this->status !== self::STATUS_DRAFT || $this->number !== null) {
+            throw new InvalidArgumentException('Only a draft invoice can be issued once.');
+        }
+        if (!preg_match('/^FAC-\\d{4}-\\d{6}$/', $number)) {
+            throw new InvalidArgumentException('Invalid invoice number format.');
+        }
+        if (trim((string) ($customerSnapshot['name'] ?? '')) === '' || trim((string) ($customerSnapshot['address'] ?? '')) === '' || trim((string) ($customerSnapshot['postal_code'] ?? '')) === '' || trim((string) ($customerSnapshot['city'] ?? '')) === '') {
+            throw new InvalidArgumentException('Customer billing identity and address are incomplete.');
+        }
+        $this->number = $number;
+        $this->issuedAt = $issuedAt;
+        $this->invoiceDate = $issuedAt;
+        $this->sellerSnapshot = $sellerSnapshot;
+        $this->customerSnapshot = $customerSnapshot;
+        $this->status = self::STATUS_ISSUED;
+        return $this;
+    }
 
     public function addLine(SalesInvoiceLine $line): self
     {
