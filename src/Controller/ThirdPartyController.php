@@ -1,17 +1,23 @@
 <?php
 
-namespace App\\Controller;
+namespace App\Controller;
 
-use App\\Entity\\ThirdParty;
-use App\\Repository\\ThirdPartyRepository;
-use Doctrine\\ORM\\EntityManagerInterface;
-use Symfony\\Bundle\\FrameworkBundle\\Controller\\AbstractController;
-use Symfony\\Component\\HttpFoundation\\Request;
-use Symfony\\Component\\HttpFoundation\\Response;
-use Symfony\\Component\\Routing\\Attribute\\Route;
+use App\Entity\ThirdParty;
+use App\Repository\ThirdPartyRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
 
 final class ThirdPartyController extends AbstractController
 {
+    private const CATEGORIES = [
+        ThirdParty::CATEGORY_CUSTOMER,
+        ThirdParty::CATEGORY_PROSPECT,
+        ThirdParty::CATEGORY_SUPPLIER,
+    ];
+
     #[Route('/third-parties', name: 'app_third_parties', methods: ['GET'])]
     public function index(Request $request, ThirdPartyRepository $thirdParties): Response
     {
@@ -22,7 +28,11 @@ final class ThirdPartyController extends AbstractController
             'third_parties' => $thirdParties->search($search, $category),
             'search' => $search,
             'selected_category' => $category,
-            'categories' => $this->categories(),
+            'categories' => [
+                ThirdParty::CATEGORY_CUSTOMER => 'Client',
+                ThirdParty::CATEGORY_PROSPECT => 'Prospect',
+                ThirdParty::CATEGORY_SUPPLIER => 'Fournisseur',
+            ],
         ]);
     }
 
@@ -33,7 +43,7 @@ final class ThirdPartyController extends AbstractController
         $errors = [];
 
         if ($request->isMethod('POST')) {
-            if (!$this->validCsrf($request, 'third_party_create')) {
+            if (!$this->isCsrfTokenValid('third_party_create', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
             }
 
@@ -51,23 +61,25 @@ final class ThirdPartyController extends AbstractController
         return $this->render('third_party/form.html.twig', [
             'third_party' => $thirdParty,
             'errors' => $errors,
-            'form_token' => $this->csrfToken($request, 'third_party_create'),
+            'csrf_token_id' => 'third_party_create',
             'is_edit' => false,
         ]);
     }
 
-    #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
-    public function show(Request $request, ThirdParty $thirdParty): Response
+    #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function show(ThirdParty $thirdParty): Response
     {
-        return $this->render('third_party/show.html.twig', [\n            'third_party' => $thirdParty,\n            'delete_token' => $this->csrfToken($request, 'third_party_delete_'.$thirdParty->getId()),\n        ]);
+        return $this->render('third_party/show.html.twig', ['third_party' => $thirdParty]);
     }
 
-    #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
+    #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, ThirdParty $thirdParty, EntityManagerInterface $entityManager): Response
     {
+        $tokenId = 'third_party_edit_'.$thirdParty->getId();
         $errors = [];
+
         if ($request->isMethod('POST')) {
-            if (!$this->validCsrf($request, 'third_party_edit_'.$thirdParty->getId())) {
+            if (!$this->isCsrfTokenValid($tokenId, (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
             }
 
@@ -83,15 +95,15 @@ final class ThirdPartyController extends AbstractController
         return $this->render('third_party/form.html.twig', [
             'third_party' => $thirdParty,
             'errors' => $errors,
-            'form_token' => $this->csrfToken($request, 'third_party_edit_'.$thirdParty->getId()),
+            'csrf_token_id' => $tokenId,
             'is_edit' => true,
         ]);
     }
 
-    #[Route('/third-parties/{id}/delete', name: 'app_third_party_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    #[Route('/third-parties/{id}/delete', name: 'app_third_party_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, ThirdParty $thirdParty, EntityManagerInterface $entityManager): Response
     {
-        if (!$this->validCsrf($request, 'third_party_delete_'.$thirdParty->getId())) {
+        if (!$this->isCsrfTokenValid('third_party_delete_'.$thirdParty->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
         }
 
@@ -114,7 +126,7 @@ final class ThirdPartyController extends AbstractController
         if ($name === '' || mb_strlen($name) > 180) {
             $errors[] = 'Le nom est obligatoire et doit contenir au maximum 180 caractères.';
         }
-        if (!in_array($category, [ThirdParty::CATEGORY_CUSTOMER, ThirdParty::CATEGORY_PROSPECT, ThirdParty::CATEGORY_SUPPLIER], true)) {
+        if (!in_array($category, self::CATEGORIES, true)) {
             $errors[] = 'Veuillez sélectionner une catégorie valide.';
         }
         if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 180)) {
@@ -134,37 +146,5 @@ final class ThirdPartyController extends AbstractController
             ->setPhone($phone);
 
         return [];
-    }
-
-    private function csrfToken(Request $request, string $id): string
-    {
-        $session = $request->getSession();
-        $tokens = $session->get('_third_party_tokens', []);
-        if (!isset($tokens[$id])) {
-            $tokens[$id] = bin2hex(random_bytes(32));
-            $session->set('_third_party_tokens', $tokens);
-        }
-
-        return $tokens[$id];
-    }
-
-    private function validCsrf(Request $request, string $id): bool
-    {
-        $tokens = $request->getSession()->get('_third_party_tokens', []);
-        $expected = $tokens[$id] ?? '';
-
-        return is_string($expected)
-            && $expected !== ''
-            && hash_equals($expected, (string) $request->request->get('_token', ''));
-    }
-
-    /** @return array<string, string> */
-    private function categories(): array
-    {
-        return [
-            ThirdParty::CATEGORY_CUSTOMER => 'Client',
-            ThirdParty::CATEGORY_PROSPECT => 'Prospect',
-            ThirdParty::CATEGORY_SUPPLIER => 'Fournisseur',
-        ];
     }
 }
