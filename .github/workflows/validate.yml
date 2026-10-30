@@ -117,6 +117,17 @@ jobs:
           sales_page = client.open(base + "/sales/quotes")
           sales_html = sales_page.read().decode()
           assert "Devis" in sales_html, "Authenticated user could not open the sales quotes module"
+          settings_page = client.open(base + "/settings/company").read().decode()
+          settings_parser = TokenParser()
+          settings_parser.feed(settings_page)
+          assert settings_parser.token, "Company settings CSRF token is missing"
+          client.open(urllib.request.Request(base + "/settings/company", data=urllib.parse.urlencode({
+              "legalName": "Société CI", "address": "1 rue du Test", "postalCode": "17000",
+              "city": "La Rochelle", "country": "France", "siren": "123456789",
+              "siret": "12345678900012", "paymentTerms": "Paiement à 30 jours",
+              "latePenaltyRate": "Taux légal applicable", "recoveryFee": "40.00",
+              "_token": settings_parser.token,
+          }).encode()))
           quote_form = client.open(base + "/sales/quotes/new").read().decode()
           assert "Nouveau devis" in quote_form, "Sales quote creation form did not render"
           third_party_form = client.open(base + "/third-parties/new").read().decode()
@@ -128,6 +139,7 @@ jobs:
               "category": "customer",
               "email": "client-ci@example.test",
               "phone": "",
+              "address": "2 rue Client", "postal_code": "17000", "city": "La Rochelle", "country": "France",
               "_token": third_party_parser.token,
           }).encode()))
           quote_form = client.open(base + "/sales/quotes/new").read().decode()
@@ -187,6 +199,27 @@ jobs:
           pdf_content = pdf_response.read()
           assert pdf_response.headers.get_content_type() == "application/pdf", "Quote PDF route returned the wrong content type"
           assert pdf_content.startswith(b"%PDF-"), "Quote PDF route did not return a valid PDF document"
+          order_id = order_id_match.group(1)
+          invoice_create_parser = TokenParser()
+          invoice_create_parser.feed(fulfil_response.read().decode())
+          invoice_create_response = client.open(urllib.request.Request(base + "/sales/invoices/from-order/" + order_id, data=urllib.parse.urlencode({
+              "_token": invoice_create_parser.token,
+          }).encode()))
+          invoice_html = invoice_create_response.read().decode()
+          assert "Facture brouillon" in invoice_html, "Invoice draft was not created from the order"
+          invoice_id_match = re.search(r"/sales/invoices/(\d+)", invoice_create_response.geturl())
+          assert invoice_id_match, "Invoice detail URL is invalid"
+          invoice_parser = TokenParser()
+          invoice_parser.feed(invoice_html)
+          issue_response = client.open(urllib.request.Request(base + "/sales/invoices/" + invoice_id_match.group(1) + "/issue", data=urllib.parse.urlencode({
+              "_token": invoice_parser.token,
+          }).encode()))
+          issued_html = issue_response.read().decode()
+          assert "FAC-" in issued_html, "Invoice was not issued with a final number"
+          invoice_pdf = client.open(base + "/sales/invoices/" + invoice_id_match.group(1) + "/pdf")
+          invoice_pdf_content = invoice_pdf.read()
+          assert invoice_pdf.headers.get_content_type() == "application/pdf", "Invoice PDF route returned the wrong content type"
+          assert invoice_pdf_content.startswith(b"%PDF-"), "Invoice PDF route did not return a valid PDF"
           print("Symfony authentication, third-party registry, quote creation, VAT totals, acceptance, idempotent order conversion, order completion and PDF export passed.")
           PY
 
