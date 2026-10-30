@@ -1,0 +1,122 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Entity;
+
+use App\Repository\SalesInvoiceRepository;
+use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
+use InvalidArgumentException;
+
+#[ORM\Entity(repositoryClass: SalesInvoiceRepository::class)]
+#[ORM\Table(name: 'app_sales_invoice', uniqueConstraints: [
+    new ORM\UniqueConstraint(name: 'uniq_sales_invoice_number', columns: ['number']),
+    new ORM\UniqueConstraint(name: 'uniq_sales_invoice_order', columns: ['sales_order_id']),
+])]
+#[ORM\Index(name: 'idx_sales_invoice_customer_status', columns: ['third_party_id', 'status'])]
+class SalesInvoice
+{
+    public const STATUS_DRAFT = 'draft';
+    public const STATUS_ISSUED = 'issued';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 32, nullable: true)]
+    private ?string $number = null;
+
+    #[ORM\OneToOne(targetEntity: SalesOrder::class)]
+    #[ORM\JoinColumn(name: 'sales_order_id', nullable: false, onDelete: 'RESTRICT')]
+    private SalesOrder $order;
+
+    #[ORM\ManyToOne(targetEntity: ThirdParty::class)]
+    #[ORM\JoinColumn(name: 'third_party_id', nullable: false, onDelete: 'RESTRICT')]
+    private ThirdParty $customer;
+
+    #[ORM\Column(length: 20)]
+    private string $status = self::STATUS_DRAFT;
+
+    #[ORM\Column(name: 'invoice_date', type: 'date_immutable')]
+    private DateTimeImmutable $invoiceDate;
+
+    #[ORM\Column(name: 'due_date', type: 'date_immutable')]
+    private DateTimeImmutable $dueDate;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $notes = null;
+
+    #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
+    private DateTimeImmutable $createdAt;
+
+    /** @var Collection<int, SalesInvoiceLine> */
+    #[ORM\OneToMany(mappedBy: 'invoice', targetEntity: SalesInvoiceLine::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
+    private Collection $lines;
+
+    public function __construct(SalesOrder $order)
+    {
+        if ($order->getStatus() === SalesOrder::STATUS_CANCELLED) {
+            throw new InvalidArgumentException('A cancelled order cannot be invoiced.');
+        }
+        $this->order = $order;
+        $this->customer = $order->getCustomer();
+        $this->invoiceDate = new DateTimeImmutable('today');
+        $this->dueDate = new DateTimeImmutable('+30 days');
+        $this->notes = $order->getNotes();
+        $this->createdAt = new DateTimeImmutable();
+        $this->lines = new ArrayCollection();
+
+        foreach ($order->getLines() as $line) {
+            $this->addLine(new SalesInvoiceLine(
+                $line->getDescription(),
+                $line->getQuantity(),
+                $line->getUnitPrice(),
+                $line->getVatRate(),
+                $line->getPosition()
+            ));
+        }
+        if ($this->lines->isEmpty()) {
+            throw new InvalidArgumentException('An order without lines cannot be invoiced.');
+        }
+    }
+
+    public function getId(): ?int { return $this->id; }
+    public function getNumber(): ?string { return $this->number; }
+    public function getOrder(): SalesOrder { return $this->order; }
+    public function getCustomer(): ThirdParty { return $this->customer; }
+    public function getStatus(): string { return $this->status; }
+    public function getInvoiceDate(): DateTimeImmutable { return $this->invoiceDate; }
+    public function getDueDate(): DateTimeImmutable { return $this->dueDate; }
+    public function getNotes(): ?string { return $this->notes; }
+
+    public function addLine(SalesInvoiceLine $line): self
+    {
+        if (!$this->lines->contains($line)) {
+            $this->lines->add($line);
+            $line->setInvoice($this);
+        }
+        return $this;
+    }
+
+    /** @return Collection<int, SalesInvoiceLine> */
+    public function getLines(): Collection { return $this->lines; }
+
+    public function getTotalExcludingTax(): float
+    {
+        return array_reduce($this->lines->toArray(), static fn (float $sum, SalesInvoiceLine $line): float => $sum + $line->getTotalExcludingTax(), 0.0);
+    }
+
+    public function getTotalTax(): float
+    {
+        return array_reduce($this->lines->toArray(), static fn (float $sum, SalesInvoiceLine $line): float => $sum + $line->getTotalTax(), 0.0);
+    }
+
+    public function getTotalIncludingTax(): float { return $this->getTotalExcludingTax() + $this->getTotalTax(); }
+}
