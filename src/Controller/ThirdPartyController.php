@@ -57,9 +57,9 @@ final class ThirdPartyController extends AbstractController
     }
 
     #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
-    public function show(ThirdParty $thirdParty): Response
+    public function show(Request $request, ThirdParty $thirdParty): Response
     {
-        return $this->render('third_party/show.html.twig', [\n            'third_party' => $thirdParty,\n            'delete_token' => $this->csrfToken($this->container->get('request_stack')->getCurrentRequest(), 'third_party_delete_'.$thirdParty->getId()),\n        ]);
+        return $this->render('third_party/show.html.twig', [\n            'third_party' => $thirdParty,\n            'delete_token' => $this->csrfToken($request, 'third_party_delete_'.$thirdParty->getId()),\n        ]);
     }
 
     #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
