@@ -6,6 +6,7 @@ use App\Entity\SalesQuote;
 use App\Entity\SalesQuoteLine;
 use App\Entity\SalesOrder;
 use App\Entity\ThirdParty;
+use App\Entity\Product;
 
 require dirname(__DIR__).'/vendor/autoload.php';
 
@@ -18,7 +19,11 @@ function expectSales(bool $condition, string $message): void
 
 $customer = new ThirdParty('Client de test', ThirdParty::CATEGORY_CUSTOMER);
 $quote = new SalesQuote($customer);
-$quote->addLine(new SalesQuoteLine('Prestation de conseil', '2', '50.00', '20.00', 1));
+$catalogProduct = new Product('SKU-CONSEIL', 'Prestation de conseil');
+$catalogProduct->update(['sku'=>'SKU-CONSEIL','name'=>'Prestation de conseil','unit'=>'heure','purchase_price'=>'20','sale_price'=>'50','vat_rate'=>'20','stock_tracked'=>'0','stock_alert_threshold'=>'0','active'=>'1']);
+$catalogLine = new SalesQuoteLine('Prestation de conseil', '2', '50.00', '20.00', 1);
+$catalogLine->setProduct($catalogProduct);
+$quote->addLine($catalogLine);
 $quote->addLine(new SalesQuoteLine('Frais de dossier', '1', '10.00', '0.00', 2));
 
 expectSales($quote->getStatus() === SalesQuote::STATUS_DRAFT, 'New quotes must start as drafts.');
@@ -32,6 +37,7 @@ expectSales($quote->getStatus() === SalesQuote::STATUS_SENT, 'Quote status must 
 $quote->setStatus(SalesQuote::STATUS_ACCEPTED);
 $order = new SalesOrder($quote);
 expectSales($order->getLines()->count() === 2, 'Order conversion must copy all quote lines.');
+expectSales($order->getLines()->first()->getProduct() === $catalogProduct, 'Order conversion must preserve the product reference.');
 expectSales($order->getTotalExcludingTax() === $quote->getTotalExcludingTax(), 'Converted order subtotal must match the accepted quote.');
 expectSales($order->getTotalTax() === $quote->getTotalTax(), 'Converted order VAT must match the accepted quote.');
 expectSales($order->getTotalIncludingTax() === $quote->getTotalIncludingTax(), 'Converted order total must match the accepted quote.');
