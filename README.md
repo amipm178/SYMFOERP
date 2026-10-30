@@ -56,6 +56,14 @@ Le workflow [Validate application](.github/workflows/validate.yml) s'exécute su
 
 Le modèle initial des tiers (clients, prospects et fournisseurs) et sa migration sont en place. La migration concerne uniquement la base Symfony ; elle n’importe ni ne modifie les données Dolibarr.
 
+## Module ventes : devis
+
+Le premier périmètre du module Ventes permet de créer et consulter des devis rattachés aux fiches clients Symfony. Chaque devis reçoit un numéro de la forme `DEV-AAAA-000001`, une date et une date limite de validité. Les lignes enregistrent une désignation, une quantité, un prix unitaire HT et un taux de TVA ; les montants HT, TVA et TTC sont calculés ligne par ligne et agrégés au niveau du devis.
+
+Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé → Accepté` ou `Refusé`. Les transitions sont protégées par CSRF et une transition terminale ne peut pas être réouverte depuis l'interface. Le module est accessible depuis le tableau de bord et la navigation principale, sous **Ventes → Devis**.
+
+La migration `Version20261030140000` crée les tables de devis et de lignes dans la base Symfony. Elle ne touche pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
+
 Après le démarrage Docker, initialisez le schéma Symfony avec :
 
 ```bash
