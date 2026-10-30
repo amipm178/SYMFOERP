@@ -32,7 +32,27 @@ expectInvoice($invoice->getTotalTax() === 20.0, 'Invoice VAT must be calculated 
 expectInvoice($invoice->getTotalIncludingTax() === 120.0, 'Invoice total must include VAT.');
 expectInvoice($invoice->getCustomer() === $customer, 'Invoice must retain the order customer.');
 
-$order->setStatus(SalesOrder::STATUS_CANCELLED);
+
+expectInvoice($invoice->getPaidAmount() === 0.0, 'New invoices must have no payments.');
+expectInvoice($invoice->getRemainingAmount() === 120.0, 'New invoices must have their full balance outstanding.');
+$status = new ReflectionProperty(SalesInvoice::class, 'status');
+$status->setValue($invoice, SalesInvoice::STATUS_ISSUED);
+$firstPayment = new SalesPayment($invoice, '40.00', new DateTimeImmutable('2026-10-30'), 'bank_transfer', 'VIR-001');
+$invoice->addPayment($firstPayment);
+expectInvoice($invoice->getStatus() === SalesInvoice::STATUS_PARTIALLY_PAID, 'Partial payment must update invoice status.');
+expectInvoice($invoice->getPaidAmount() === 40.0, 'Paid amount must aggregate payments.');
+expectInvoice($invoice->getRemainingAmount() === 80.0, 'Remaining balance must decrease after payment.');
+$secondPayment = new SalesPayment($invoice, '80.00', new DateTimeImmutable('2026-10-30'), 'card');
+$invoice->addPayment($secondPayment);
+expectInvoice($invoice->getStatus() === SalesInvoice::STATUS_PAID, 'Full payment must mark invoice as paid.');
+expectInvoice($invoice->getRemainingAmount() === 0.0, 'Fully paid invoice must have no remaining balance.');
+try {
+    $invoice->addPayment(new SalesPayment($invoice, '1.00', new DateTimeImmutable('2026-10-30'), 'cash'));
+    throw new RuntimeException('An overpayment was accepted.');
+} catch (InvalidArgumentException) {
+    // Fully settled invoices reject further payments.
+}
+\n$order->setStatus(SalesOrder::STATUS_CANCELLED);
 try {
     new SalesInvoice($order);
     throw new RuntimeException('A cancelled order was invoiced.');
