@@ -44,6 +44,8 @@ Accès :
 
 Cette configuration est destinée au développement local, pas à une exposition directe sur Internet. Pour un déploiement public, prévoir un reverse proxy HTTPS, des secrets gérés hors du dépôt, des sauvegardes testées et une configuration Symfony en production.
 
+**Sécurité Symfony :** l'authentification et les règles d'autorisation ne sont pas encore implémentées (`access_control` est vide). Les écrans Symfony, y compris la gestion des tiers, sont donc accessibles sans connexion dans cette phase de développement. Ne publiez pas le port 8000 et ne déployez pas cette application sur un réseau partagé ou Internet avant l'ajout et la validation d'une authentification, des rôles et des contrôles d'accès.
+
 L'image officielle Dolibarr est configurée pour initialiser automatiquement une nouvelle instance au premier démarrage. Les paramètres `DOLI_ADMIN_LOGIN` et `DOLI_ADMIN_PASSWORD` définissent le compte administrateur initial. Le chargement des données de démonstration est désactivé.
 
 ## Intégration continue
