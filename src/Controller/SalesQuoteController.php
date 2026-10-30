@@ -10,6 +10,8 @@ use App\Entity\ThirdParty;
 use App\Repository\SalesQuoteRepository;
 use App\Repository\ThirdPartyRepository;
 use DateTimeImmutable;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -137,6 +139,26 @@ final class SalesQuoteController extends AbstractController
             'values' => $values,
             'line_values' => $lineValues,
             'errors' => $errors,
+        ]);
+    }
+
+    #[Route('/{id}/pdf', name: 'app_sales_quote_pdf', requirements: ['id' => '\\d+'], methods: ['GET'])]
+    public function pdf(SalesQuote $quote): Response
+    {
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', false);
+        $options->set('isPhpEnabled', false);
+
+        $pdf = new Dompdf($options);
+        $pdf->loadHtml($this->renderView('sales_quote/pdf.html.twig', ['quote' => $quote]), 'UTF-8');
+        $pdf->setPaper('A4', 'portrait');
+        $pdf->render();
+
+        return new Response($pdf->output(), Response::HTTP_OK, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('inline; filename="%s.pdf"', $quote->getNumber()),
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
