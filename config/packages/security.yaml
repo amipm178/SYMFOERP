@@ -25,6 +25,8 @@ security:
             logout:
                 path: app_logout
                 target: app_login
+                enable_csrf: true
+                csrf_token_id: logout
     access_control:
         - { path: ^/healthz$, roles: PUBLIC_ACCESS }
         - { path: ^/login$, roles: PUBLIC_ACCESS }
