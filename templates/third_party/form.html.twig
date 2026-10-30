@@ -19,7 +19,7 @@
             <input type="hidden" name="_token" value="{{ form_token }}">
             <p>
                 <label for="name">Nom / raison sociale *</label>
-                <input id="name" name="name" type="text" maxlength="180" required value="{{ third_party.name }}">
+                <input id="name" name="name" type="text" maxlength="180" required value="{{ is_edit ? third_party.name : '' }}">
             </p>
             <p>
                 <label for="category">Catégorie *</label>
