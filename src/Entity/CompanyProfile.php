@@ -123,6 +123,7 @@ class CompanyProfile
         $this->paymentTerms = trim((string) ($data['paymentTerms'] ?? '')) ?: null;
         $this->latePenaltyRate = trim((string) ($data['latePenaltyRate'] ?? '')) ?: null;
         $this->recoveryFee = trim((string) ($data['recoveryFee'] ?? '')) ?: null;
+        if ($this->recoveryFee !== null && (!is_numeric($this->recoveryFee) || (float) $this->recoveryFee < 0)) { throw new InvalidArgumentException('L’indemnité de recouvrement doit être un montant numérique positif ou nul.'); }
         $this->vatRegimeNote = trim((string) ($data['vatRegimeNote'] ?? '')) ?: null;
         $delay = filter_var($data['paymentDelayDays'] ?? 30, FILTER_VALIDATE_INT);
         if ($delay === false || $delay < 0 || $delay > 365) { throw new InvalidArgumentException('Le délai de paiement doit être compris entre 0 et 365 jours.'); }
