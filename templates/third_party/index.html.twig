@@ -65,7 +65,26 @@
                     </tbody>
                 </table>
             </div>
-            <p class="muted">{{ third_parties|length }} fiche(s) trouvée(s).</p>
+            <p class="muted">
+                {{ total_count }} fiche(s) trouvée(s) · Page {{ current_page }} sur {{ page_count }}.
+            </p>
+            {% if page_count > 1 %}
+                <nav aria-label="Pagination des tiers">
+                    {% if current_page > 1 %}
+                        <a rel="prev" href="{{ path('app_third_parties', {q: search, category: selected_category, page: current_page - 1}) }}">← Précédent</a>
+                    {% endif %}
+                    {% for page_number in 1..page_count %}
+                        {% if page_number == current_page %}
+                            <strong aria-current="page">{{ page_number }}</strong>
+                        {% else %}
+                            <a href="{{ path('app_third_parties', {q: search, category: selected_category, page: page_number}) }}">{{ page_number }}</a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if current_page < page_count %}
+                        <a rel="next" href="{{ path('app_third_parties', {q: search, category: selected_category, page: current_page + 1}) }}">Suivant →</a>
+                    {% endif %}
+                </nav>
+            {% endif %}
         {% endif %}
     </section>
 {% endblock %}
