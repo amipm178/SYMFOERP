@@ -53,7 +53,7 @@ final class SalesInvoiceController extends AbstractController
     }
 
 
-    #[Route('/{id}/issue', name: 'app_sales_invoice_issue', requirements: ['id' => '\\\\d+'], methods: ['POST'])]
+    #[Route('/{id}/issue', name: 'app_sales_invoice_issue', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function issue(Request $request, SalesInvoice $invoice, EntityManagerInterface $entityManager): Response
     {
         if (!$this->isCsrfTokenValid('sales_invoice_issue_'.$invoice->getId(), (string) $request->request->get('_token'))) {
