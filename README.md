@@ -26,7 +26,7 @@ git submodule update --init --recursive
 cp .env.docker.example .env.docker
 ```
 
-Éditez `.env.docker` et remplacez impérativement tous les secrets d'exemple, notamment le mot de passe administrateur Dolibarr et les mots de passe MariaDB. Puis lancez :
+Éditez `.env.docker` et remplacez impérativement tous les secrets d'exemple, notamment le mot de passe administrateur Dolibarr et les mots de passe MariaDB. Vous pouvez générer des valeurs aléatoires avec `openssl rand -hex 32`. Pour éviter d'exposer une instance de développement sur le réseau local, les ports HTTP sont liés à `127.0.0.1` : ils sont accessibles uniquement depuis la machine hôte. Puis lancez :
 
 ```bash
 docker compose --env-file .env.docker config
@@ -40,6 +40,8 @@ Accès :
 
 - Dolibarr 24.0.2 : http://localhost:8080
 - Symfony : http://localhost:8000
+
+Cette configuration est destinée au développement local, pas à une exposition directe sur Internet. Pour un déploiement public, prévoir un reverse proxy HTTPS, des secrets gérés hors du dépôt, des sauvegardes testées et une configuration Symfony en production.
 
 L'image officielle Dolibarr est configurée pour initialiser automatiquement une nouvelle instance au premier démarrage. Les paramètres `DOLI_ADMIN_LOGIN` et `DOLI_ADMIN_PASSWORD` définissent le compte administrateur initial. Le chargement des données de démonstration est désactivé.
 
