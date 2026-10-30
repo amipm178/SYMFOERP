@@ -21,7 +21,9 @@ class SalesInvoice
 {
     public const STATUS_DRAFT = 'draft';
     public const STATUS_ISSUED = 'issued';
+    public const STATUS_PARTIALLY_PAID = 'partially_paid';
     public const STATUS_PAID = 'paid';
+    public const STATUS_OVERDUE = 'overdue';
     public const STATUS_CANCELLED = 'cancelled';
 
     #[ORM\Id]
@@ -60,6 +62,11 @@ class SalesInvoice
     #[ORM\OrderBy(['position' => 'ASC', 'id' => 'ASC'])]
     private Collection $lines;
 
+    /** @var Collection<int, SalesPayment> */
+    #[ORM\OneToMany(mappedBy: 'invoice', targetEntity: SalesPayment::class, cascade: ['persist'], orphanRemoval: true)]
+    #[ORM\OrderBy(['paidAt' => 'DESC', 'id' => 'DESC'])]
+    private Collection $payments;
+
     public function __construct(SalesOrder $order)
     {
         if ($order->getStatus() === SalesOrder::STATUS_CANCELLED) {
@@ -72,15 +79,10 @@ class SalesInvoice
         $this->notes = $order->getNotes();
         $this->createdAt = new DateTimeImmutable();
         $this->lines = new ArrayCollection();
+        $this->payments = new ArrayCollection();
 
         foreach ($order->getLines() as $line) {
-            $this->addLine(new SalesInvoiceLine(
-                $line->getDescription(),
-                $line->getQuantity(),
-                $line->getUnitPrice(),
-                $line->getVatRate(),
-                $line->getPosition()
-            ));
+            $this->addLine(new SalesInvoiceLine($line->getDescription(), $line->getQuantity(), $line->getUnitPrice(), $line->getVatRate(), $line->getPosition()));
         }
         if ($this->lines->isEmpty()) {
             throw new InvalidArgumentException('An order without lines cannot be invoiced.');
@@ -108,6 +110,27 @@ class SalesInvoice
     /** @return Collection<int, SalesInvoiceLine> */
     public function getLines(): Collection { return $this->lines; }
 
+    /** @return Collection<int, SalesPayment> */
+    public function getPayments(): Collection { return $this->payments; }
+
+    public function addPayment(SalesPayment $payment): self
+    {
+        if ($this->status !== self::STATUS_ISSUED && $this->status !== self::STATUS_PARTIALLY_PAID) {
+            throw new InvalidArgumentException('Only issued invoices can receive payments.');
+        }
+        if ($this->getRemainingAmount() <= 0) {
+            throw new InvalidArgumentException('This invoice has no remaining balance.');
+        }
+        if ((float) $payment->getAmount() > $this->getRemainingAmount() + 0.001) {
+            throw new InvalidArgumentException('Payment exceeds the remaining invoice balance.');
+        }
+        if (!$this->payments->contains($payment)) {
+            $this->payments->add($payment);
+        }
+        $this->status = $this->getRemainingAmount() <= 0.001 ? self::STATUS_PAID : self::STATUS_PARTIALLY_PAID;
+        return $this;
+    }
+
     public function getTotalExcludingTax(): float
     {
         return array_reduce($this->lines->toArray(), static fn (float $sum, SalesInvoiceLine $line): float => $sum + $line->getTotalExcludingTax(), 0.0);
@@ -118,5 +141,23 @@ class SalesInvoice
         return array_reduce($this->lines->toArray(), static fn (float $sum, SalesInvoiceLine $line): float => $sum + $line->getTotalTax(), 0.0);
     }
 
-    public function getTotalIncludingTax(): float { return $this->getTotalExcludingTax() + $this->getTotalTax(); }
+    public function getTotalIncludingTax(): float { return round($this->getTotalExcludingTax() + $this->getTotalTax(), 2); }
+
+    public function getPaidAmount(): float
+    {
+        return round(array_reduce($this->payments->toArray(), static fn (float $sum, SalesPayment $payment): float => $sum + (float) $payment->getAmount(), 0.0), 2);
+    }
+
+    public function getRemainingAmount(): float
+    {
+        return max(0.0, round($this->getTotalIncludingTax() - $this->getPaidAmount(), 2));
+    }
+
+    public function getEffectiveStatus(?DateTimeImmutable $today = null): string
+    {
+        if ($this->status === self::STATUS_ISSUED && $this->getRemainingAmount() > 0 && $this->dueDate < ($today ?? new DateTimeImmutable('today'))) {
+            return self::STATUS_OVERDUE;
+        }
+        return $this->status;
+    }
 }
