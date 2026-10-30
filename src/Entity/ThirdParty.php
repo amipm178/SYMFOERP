@@ -62,8 +62,8 @@ class ThirdParty
     public function setName(string $name): self
     {
         $name = trim($name);
-        if ($name === '') {
-            throw new InvalidArgumentException('A third party name cannot be empty.');
+        if ($name === '' || mb_strlen($name) > 180) {
+            throw new InvalidArgumentException('A third party name must contain between 1 and 180 characters.');
         }
 
         $this->name = $name;
@@ -94,7 +94,12 @@ class ThirdParty
 
     public function setEmail(?string $email): self
     {
-        $this->email = $email !== null && trim($email) !== '' ? trim($email) : null;
+        $email = $email !== null ? trim($email) : '';
+        if ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 180)) {
+            throw new InvalidArgumentException('A valid email address of at most 180 characters is required.');
+        }
+
+        $this->email = $email !== '' ? $email : null;
 
         return $this;
     }
@@ -106,7 +111,12 @@ class ThirdParty
 
     public function setPhone(?string $phone): self
     {
-        $this->phone = $phone !== null && trim($phone) !== '' ? trim($phone) : null;
+        $phone = $phone !== null ? trim($phone) : '';
+        if (mb_strlen($phone) > 40) {
+            throw new InvalidArgumentException('A phone number cannot exceed 40 characters.');
+        }
+
+        $this->phone = $phone !== '' ? $phone : null;
 
         return $this;
     }
