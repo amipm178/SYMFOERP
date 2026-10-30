@@ -62,7 +62,7 @@ Le premier périmètre du module Ventes permet de créer et consulter des devis 
 
 Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé → Accepté` ou `Refusé`. Les transitions sont protégées par CSRF et une transition terminale ne peut pas être réouverte depuis l'interface. Les devis peuvent être exportés en PDF A4 avec Dompdf ; le chargement de ressources distantes et l'exécution de PHP dans les documents sont désactivés.
 
-Un devis accepté peut être converti en commande client. La commande reçoit un numéro `CMD-AAAA-000001` et conserve une copie indépendante des lignes, quantités, prix et taux de TVA du devis accepté. Une contrainte unique en base garantit qu'un devis ne peut produire qu'une seule commande. Les vues de devis et de commandes sont accessibles depuis la navigation principale.
+Un devis accepté peut être converti en commande client. La commande reçoit un numéro `CMD-AAAA-000001` et conserve une copie indépendante des lignes, quantités, prix et taux de TVA du devis accepté. Une contrainte unique en base et un verrouillage transactionnel garantissent qu'un devis ne produit qu'une seule commande, y compris lors de conversions concurrentes. Une commande peut ensuite être terminée ou annulée ; ces transitions sont protégées par CSRF et les statuts terminaux ne sont pas réouverts depuis l'interface. Les vues de devis et de commandes sont accessibles depuis la navigation principale.
 
 Les migrations `Version20261030140000` et `Version20261030150000` créent les tables de devis, lignes de devis, commandes et lignes de commande dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
 
