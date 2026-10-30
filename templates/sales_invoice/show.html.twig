@@ -15,8 +15,8 @@
             <p><a href="{{ path('app_sales_invoice_pdf', {id: invoice.id}) }}">Ouvrir le PDF de la facture</a></p>
         {% endif %}
         <p><strong>Commande source :</strong> <a href="{{ path('app_sales_order_show', {id: invoice.order.id}) }}">{{ invoice.order.number }}</a></p>
-        <p><strong>Date de préparation :</strong> {{ invoice.invoiceDate|date('d/m/Y') }}</p>
-        <p><strong>Échéance proposée :</strong> {{ invoice.dueDate|date('d/m/Y') }}</p>
+        <p><strong>{{ invoice.number ? 'Date de facture' : 'Date de préparation' }} :</strong> {{ invoice.invoiceDate|date('d/m/Y') }}</p>
+        <p><strong>{{ invoice.number ? 'Échéance' : 'Échéance proposée' }} :</strong> {{ invoice.dueDate|date('d/m/Y') }}</p>
     </section>
     <section class="card">
         <h2>Lignes reprises de la commande</h2>
