@@ -18,16 +18,24 @@ final class ThirdPartyController extends AbstractController
         ThirdParty::CATEGORY_SUPPLIER,
     ];
 
+    private const ITEMS_PER_PAGE = 25;
+
     #[Route('/third-parties', name: 'app_third_parties', methods: ['GET'])]
     public function index(Request $request, ThirdPartyRepository $thirdParties): Response
     {
         $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120);
         $category = (string) $request->query->get('category', '');
+        $total = $thirdParties->countSearchResults($search, $category);
+        $pageCount = max(1, (int) ceil($total / self::ITEMS_PER_PAGE));
+        $page = min($pageCount, max(1, $request->query->getInt('page', 1)));
 
         return $this->render('third_party/index.html.twig', [
-            'third_parties' => $thirdParties->search($search, $category),
+            'third_parties' => $thirdParties->search($search, $category, $page, self::ITEMS_PER_PAGE),
             'search' => $search,
             'selected_category' => $category,
+            'current_page' => $page,
+            'page_count' => $pageCount,
+            'total_count' => $total,
             'categories' => [
                 ThirdParty::CATEGORY_CUSTOMER => 'Client',
                 ThirdParty::CATEGORY_PROSPECT => 'Prospect',
@@ -79,13 +87,13 @@ final class ThirdPartyController extends AbstractController
         ]);
     }
 
-    #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\d+'], methods: ['GET'])]
+    #[Route('/third-parties/{id}', name: 'app_third_party_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function show(ThirdParty $thirdParty): Response
     {
         return $this->render('third_party/show.html.twig', ['third_party' => $thirdParty]);
     }
 
-    #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[Route('/third-parties/{id}/edit', name: 'app_third_party_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, ThirdParty $thirdParty, EntityManagerInterface $entityManager): Response
     {
         $tokenId = 'third_party_edit_'.$thirdParty->getId();
@@ -126,7 +134,7 @@ final class ThirdPartyController extends AbstractController
         ]);
     }
 
-    #[Route('/third-parties/{id}/delete', name: 'app_third_party_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[Route('/third-parties/{id}/delete', name: 'app_third_party_delete', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function delete(Request $request, ThirdParty $thirdParty, EntityManagerInterface $entityManager): Response
     {
         if (!$this->isCsrfTokenValid('third_party_delete_'.$thirdParty->getId(), (string) $request->request->get('_token'))) {
