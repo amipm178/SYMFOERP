@@ -3,10 +3,10 @@
 {% block body %}
     <p class="muted">GESTION COMMERCIALE / FACTURATION</p>
     <p><a href="{{ path('app_sales_invoices') }}">← Toutes les factures</a></p>
-    {% for message in app.flashes('success') %}<p class="card" role="status">{{ message }}</p>{% endfor %}
+    {% for message in app.flashes('success') %}<p class="card" role="status">{{ message }}</p>{% endfor %}\n    {% for message in app.flashes('error') %}<p class="card" role="alert">{{ message }}</p>{% endfor %}
     <h1>Facture brouillon #{{ invoice.id }}</h1>
     <section class="card">
-        <p><strong>État :</strong> Brouillon — non émise</p>
+        <p><strong>État :</strong> {{ {'draft':'Brouillon — non émise','issued':'Émise','partially_paid':'Partiellement réglée','paid':'Payée','overdue':'En retard','cancelled':'Annulée'}[invoice.effectiveStatus] ?? invoice.effectiveStatus }}</p>
         <p><strong>Client :</strong> {{ invoice.customer.name }}</p>
         <p><strong>Commande source :</strong> <a href="{{ path('app_sales_order_show', {id: invoice.order.id}) }}">{{ invoice.order.number }}</a></p>
         <p><strong>Date de préparation :</strong> {{ invoice.invoiceDate|date('d/m/Y') }}</p>
