@@ -24,7 +24,7 @@
             <tbody>
             {% for line in quote.lines %}
                 <tr>
-                    <td>{{ line.description }}</td><td>{{ line.quantity }}</td>
+                    <td>{{ line.description }}{% if line.product %}<br><small class="muted">Réf. {{ line.product.sku }}</small>{% endif %}</td><td>{{ line.quantity }}</td>
                     <td>{{ line.unitPrice|number_format(2, ',', ' ') }} €</td><td>{{ line.vatRate|number_format(2, ',', ' ') }} %</td>
                     <td>{{ line.totalExcludingTax|number_format(2, ',', ' ') }} €</td>
                     <td>{{ line.totalIncludingTax|number_format(2, ',', ' ') }} €</td>
