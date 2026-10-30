@@ -1,11 +1,20 @@
+# Git metadata and the official Dolibarr submodule are not part of the Symfony image.
 .git
 .gitmodules
 dolibarr/
+
+# Dependencies and generated runtime files.
 vendor/
 var/
-.env.local
-.env.*.local
-.env.docker
 .phpunit.cache/
+
+# Never copy local environment files or secrets into an image.
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Editor and operating-system files.
 .idea/
 .vscode/
+.DS_Store
