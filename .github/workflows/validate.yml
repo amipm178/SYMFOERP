@@ -18,6 +18,7 @@ jobs:
   compose-and-symfony:
     name: Compose configuration and Symfony image
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,3 +31,23 @@ jobs:
 
       - name: Build Symfony application image
         run: docker build --tag symfoerp-symfony:ci --file Dockerfile .
+
+      - name: Smoke test Symfony HTTP application
+        run: |
+          set -eu
+          docker run --detach --rm --name symfoerp-symfony-smoke -p 127.0.0.1:8000:8000 symfoerp-symfony:ci
+          cleanup() {
+            docker stop symfoerp-symfony-smoke >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
+              grep -q "Tiers &amp; CRM\|Tiers & CRM" /tmp/symfoerp-home.html
+              echo "Symfony dashboard responded successfully."
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs symfoerp-symfony-smoke
+          echo "Symfony HTTP smoke test failed." >&2
+          exit 1
