@@ -120,10 +120,12 @@ final class SalesQuoteController extends AbstractController
                 foreach ($parsedLines as $line) {
                     $quote->addLine($line);
                 }
-                $entityManager->persist($quote);
-                $entityManager->flush();
-                $quote->assignNumber();
-                $entityManager->flush();
+                $entityManager->getConnection()->transactional(static function () use ($entityManager, $quote): void {
+                    $entityManager->persist($quote);
+                    $entityManager->flush();
+                    $quote->assignNumber();
+                    $entityManager->flush();
+                });
 
                 $this->addFlash('success', sprintf('Le devis %s a été créé.', $quote->getNumber()));
                 return $this->redirectToRoute('app_sales_quote_show', ['id' => $quote->getId()]);
