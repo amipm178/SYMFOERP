@@ -39,6 +39,18 @@ class ThirdParty
     #[ORM\Column(length: 40, nullable: true)]
     private ?string $phone = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $address = null;
+
+    #[ORM\Column(name: 'postal_code', length: 20, nullable: true)]
+    private ?string $postalCode = null;
+
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $city = null;
+
+    #[ORM\Column(length: 80, nullable: true)]
+    private ?string $country = null;
+
     #[ORM\Column(name: 'created_at')]
     private DateTimeImmutable $createdAt;
 
@@ -120,6 +132,16 @@ class ThirdParty
 
         return $this;
     }
+
+    public function getAddress(): ?string { return $this->address; }
+    public function getPostalCode(): ?string { return $this->postalCode; }
+    public function getCity(): ?string { return $this->city; }
+    public function getCountry(): ?string { return $this->country; }
+
+    public function setAddress(?string $value): self { $this->address = trim((string) $value) ?: null; return $this; }
+    public function setPostalCode(?string $value): self { $this->postalCode = trim((string) $value) ?: null; return $this; }
+    public function setCity(?string $value): self { $this->city = trim((string) $value) ?: null; return $this; }
+    public function setCountry(?string $value): self { $this->country = trim((string) $value) ?: null; return $this; }
 
     public function getCreatedAt(): DateTimeImmutable
     {
