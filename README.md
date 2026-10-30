@@ -64,7 +64,9 @@ Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé �
 
 Un devis accepté peut être converti en commande client. La commande reçoit un numéro `CMD-AAAA-000001` et conserve une copie indépendante des lignes, quantités, prix et taux de TVA du devis accepté. Une contrainte unique en base et un verrouillage transactionnel garantissent qu'un devis ne produit qu'une seule commande, y compris lors de conversions concurrentes. Une commande peut ensuite être terminée ou annulée ; ces transitions sont protégées par CSRF et les statuts terminaux ne sont pas réouverts depuis l'interface. Les vues de devis et de commandes sont accessibles depuis la navigation principale.
 
-Les migrations `Version20261030140000` et `Version20261030150000` créent les tables de devis, lignes de devis, commandes et lignes de commande dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
+Une commande peut produire une facture brouillon unique dans la V1. La facture copie indépendamment le client, les lignes, les quantités, les prix et les taux de TVA ; les totaux sont recalculés à partir de cette copie. La date d’échéance proposée est fixée à 30 jours. La création est idempotente et protégée par CSRF et verrouillage transactionnel. L’émission, le numéro définitif, les paiements et les exports PDF de facture ne sont pas encore activés : les informations légales du vendeur et les règles de facturation doivent d’abord être configurées et validées. Un brouillon SYMFOERP n’est pas une facture officielle.
+
+Les migrations `Version20261030140000`, `Version20261030150000` et `Version20261030160000` créent les tables de devis, commandes et factures brouillon dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
 
 Après le démarrage Docker, initialisez le schéma Symfony avec :
 
