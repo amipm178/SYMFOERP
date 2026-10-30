@@ -60,9 +60,11 @@ Le modèle initial des tiers (clients, prospects et fournisseurs) et sa migratio
 
 Le premier périmètre du module Ventes permet de créer et consulter des devis rattachés aux fiches clients Symfony. Chaque devis reçoit un numéro de la forme `DEV-AAAA-000001`, une date et une date limite de validité. Les lignes enregistrent une désignation, une quantité, un prix unitaire HT et un taux de TVA ; les montants HT, TVA et TTC sont calculés ligne par ligne et agrégés au niveau du devis.
 
-Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé → Accepté` ou `Refusé`. Les transitions sont protégées par CSRF et une transition terminale ne peut pas être réouverte depuis l'interface. Le module est accessible depuis le tableau de bord et la navigation principale, sous **Ventes → Devis**.
+Le cycle de vie initial est volontairement contrôlé : `Brouillon → Envoyé → Accepté` ou `Refusé`. Les transitions sont protégées par CSRF et une transition terminale ne peut pas être réouverte depuis l'interface. Les devis peuvent être exportés en PDF A4 avec Dompdf ; le chargement de ressources distantes et l'exécution de PHP dans les documents sont désactivés.
 
-La migration `Version20261030140000` crée les tables de devis et de lignes dans la base Symfony. Elle ne touche pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
+Un devis accepté peut être converti en commande client. La commande reçoit un numéro `CMD-AAAA-000001` et conserve une copie indépendante des lignes, quantités, prix et taux de TVA du devis accepté. Une contrainte unique en base garantit qu'un devis ne peut produire qu'une seule commande. Les vues de devis et de commandes sont accessibles depuis la navigation principale.
+
+Les migrations `Version20261030140000` et `Version20261030150000` créent les tables de devis, lignes de devis, commandes et lignes de commande dans la base Symfony. Elles ne touchent pas à la base Dolibarr. Les commandes de migration existantes restent la méthode d'installation du schéma.
 
 Après le démarrage Docker, initialisez le schéma Symfony avec :
 
