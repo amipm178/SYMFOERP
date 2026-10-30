@@ -106,6 +106,11 @@ jobs:
           client.open(urllib.request.Request(base + "/logout", data=logout_payload)).read()
           after_logout = client.open(base + "/third-parties")
           assert after_logout.geturl().endswith("/login"), "Logout did not invalidate the authenticated session"
+          relogin_page = client.open(base + "/login").read().decode()
+          relogin_parser = TokenParser()
+          relogin_parser.feed(relogin_page)
+          relogin_payload = urllib.parse.urlencode({"email": "ci-admin@example.test", "password": "CI-Only-Password-2026", "_csrf_token": relogin_parser.token}).encode()
+          client.open(urllib.request.Request(base + "/login", data=relogin_payload)).read()
           sales_page = client.open(base + "/sales/quotes")
           sales_html = sales_page.read().decode()
           assert "Devis" in sales_html, "Authenticated user could not open the sales quotes module"
@@ -128,7 +133,7 @@ jobs:
           assert quote_parser.token, "Sales quote creation CSRF token is missing"
           import re
           from datetime import date, timedelta
-          customer_match = re.search(r'<option value="(\\d+)"[^>]*>Client CI</option>', quote_form)
+          customer_match = re.search(r'<option value="(\d+)"[^>]*>Client CI</option>', quote_form)
           assert customer_match, "New customer was not available in the quote form"
           quote_payload = {
               "customer_id": customer_match.group(1),
@@ -146,7 +151,7 @@ jobs:
           assert "120,00 €" in quote_html, "Quote total including VAT is incorrect"
           quote_parser = TokenParser()
           quote_parser.feed(quote_html)
-          quote_id_match = re.search(r"/sales/quotes/(\\d+)", quote_response.geturl())
+          quote_id_match = re.search(r"/sales/quotes/(\d+)", quote_response.geturl())
           assert quote_id_match, "Created quote detail URL is invalid"
           status_payload = urllib.parse.urlencode({"_token": quote_parser.token, "status": "sent"}).encode()
           sent_response = client.open(urllib.request.Request(base + "/sales/quotes/" + quote_id_match.group(1) + "/status", data=status_payload))
