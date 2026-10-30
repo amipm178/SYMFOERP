@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Entity\SalesInvoice;
+use App\Entity\CompanyProfile;
 use App\Entity\SalesOrder;
 use App\Entity\SalesPayment;
 use App\Entity\SalesQuote;
@@ -35,8 +36,24 @@ expectInvoice($invoice->getCustomer() === $customer, 'Invoice must retain the or
 expectInvoice($invoice->getPaidAmount() === 0.0, 'New invoices must have no payments.');
 expectInvoice($invoice->getRemainingAmount() === 120.0, 'New invoices must have their full balance outstanding.');
 
-$status = new ReflectionProperty(SalesInvoice::class, 'status');
-$status->setValue($invoice, SalesInvoice::STATUS_ISSUED);
+$profile = new CompanyProfile();
+$profile->update([
+    'legalName' => 'Société de test', 'address' => '1 rue du Test',
+    'postalCode' => '17000', 'city' => 'La Rochelle', 'country' => 'France',
+    'siren' => '123456789', 'siret' => '12345678900012',
+]);
+expectInvoice($profile->getInvoiceReadinessErrors() === [], 'Complete seller profile must be ready for invoice issuance.');
+$customerSnapshot = ['name' => 'Client facture test', 'address' => '2 rue Client', 'postal_code' => '17000', 'city' => 'La Rochelle'];
+$invoice->issue('FAC-2026-000001', new DateTimeImmutable('2026-10-30 12:00:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+expectInvoice($invoice->getStatus() === SalesInvoice::STATUS_ISSUED, 'Issuing a draft must change its status.');
+expectInvoice($invoice->getNumber() === 'FAC-2026-000001', 'Issuance must assign the official invoice number.');
+expectInvoice($invoice->getSellerSnapshot()['siren'] === '123456789', 'Seller identity must be snapshotted.');
+try {
+    $invoice->issue('FAC-2026-000002', new DateTimeImmutable('2026-10-30 12:01:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+    throw new RuntimeException('An invoice was issued twice.');
+} catch (InvalidArgumentException) {
+    // An issued invoice is immutable and cannot receive a second number.
+}
 $firstPayment = new SalesPayment($invoice, '40.00', new DateTimeImmutable('2026-10-30'), 'bank_transfer', 'VIR-001');
 $invoice->addPayment($firstPayment);
 expectInvoice($invoice->getStatus() === SalesInvoice::STATUS_PARTIALLY_PAID, 'Partial payment must update invoice status.');
