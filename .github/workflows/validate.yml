@@ -34,7 +34,7 @@ jobs:
 
       - name: Check PHP syntax
         run: |
-          docker run --rm symfoerp-symfony:ci sh -lc 'find src config public -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l'
+          docker run --rm symfoerp-symfony:ci sh -lc 'find src config public migrations tests -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l'
 
       - name: Test third-party entity invariants
         run: docker run --rm symfoerp-symfony:ci php tests/third_party_entity_smoke.php
@@ -170,6 +170,9 @@ jobs:
           order_html = order_response.read().decode()
           assert "CMD-" in order_html, "Accepted quote was not converted to a sales order"
           assert "120,00 €" in order_html, "Sales order totals do not match the source quote"
+          first_order_url = order_response.geturl()
+          duplicate_response = client.open(urllib.request.Request(base + "/sales/quotes/" + quote_id_match.group(1) + "/convert", data=convert_payload))
+          assert duplicate_response.geturl() == first_order_url, "Repeated quote conversion created a different order"
           pdf_response = client.open(base + "/sales/quotes/" + quote_id_match.group(1) + "/pdf")
           pdf_content = pdf_response.read()
           assert pdf_response.headers.get_content_type() == "application/pdf", "Quote PDF route returned the wrong content type"
