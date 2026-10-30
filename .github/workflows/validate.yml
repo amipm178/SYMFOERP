@@ -201,10 +201,10 @@ jobs:
           assert pdf_response.headers.get_content_type() == "application/pdf", "Quote PDF route returned the wrong content type"
           assert pdf_content.startswith(b"%PDF-"), "Quote PDF route did not return a valid PDF document"
           order_id = order_id_match.group(1)
-          invoice_create_parser = TokenParser()
-          invoice_create_parser.feed(fulfil_html)
+          invoice_create_token = re.search(r'<form method="post" action="/sales/invoices/from-order/\d+">.*?name="_token" value="([^"]+)"', fulfil_html, re.S)
+          assert invoice_create_token, "Invoice creation CSRF token is missing"
           invoice_create_response = client.open(urllib.request.Request(base + "/sales/invoices/from-order/" + order_id, data=urllib.parse.urlencode({
-              "_token": invoice_create_parser.token,
+              "_token": invoice_create_token.group(1),
           }).encode()))
           invoice_html = invoice_create_response.read().decode()
           assert "Facture brouillon" in invoice_html, "Invoice draft was not created from the order"
