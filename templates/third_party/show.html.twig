@@ -18,7 +18,7 @@
         </dl>
         <p><a href="{{ path('app_third_party_edit', {id: third_party.id}) }}">Modifier la fiche</a></p>
         <form method="post" action="{{ path('app_third_party_delete', {id: third_party.id}) }}" onsubmit="return confirm('Supprimer définitivement ce tiers ?');">
-            <input type="hidden" name="_token" value="{{ delete_token }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('third_party_delete_' ~ third_party.id) }}">
             <button type="submit">Supprimer</button>
         </form>
     </section>
