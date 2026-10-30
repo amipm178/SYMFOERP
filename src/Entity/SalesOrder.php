@@ -74,7 +74,8 @@ class SalesOrder
                 $line->getQuantity(),
                 $line->getUnitPrice(),
                 $line->getVatRate(),
-                $line->getPosition()
+                $line->getPosition(),
+                $line->getProduct()
             ));
         }
     }
