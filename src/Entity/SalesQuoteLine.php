@@ -21,6 +21,10 @@ class SalesQuoteLine
     #[ORM\JoinColumn(name: 'quote_id', nullable: false, onDelete: 'CASCADE')]
     private ?SalesQuote $quote = null;
 
+    #[ORM\ManyToOne(targetEntity: Product::class)]
+    #[ORM\JoinColumn(name: 'product_id', nullable: true, onDelete: 'RESTRICT')]
+    private ?Product $product = null;
+
     #[ORM\Column(length: 255)]
     private string $description;
 
@@ -61,6 +65,8 @@ class SalesQuoteLine
     public function getId(): ?int { return $this->id; }
     public function setQuote(SalesQuote $quote): self { $this->quote = $quote; return $this; }
     public function getDescription(): string { return $this->description; }
+    public function setProduct(?Product $product): self { $this->product = $product; return $this; }
+    public function getProduct(): ?Product { return $this->product; }
     public function getQuantity(): string { return $this->quantity; }
     public function getUnitPrice(): string { return $this->unitPrice; }
     public function getVatRate(): string { return $this->vatRate; }
