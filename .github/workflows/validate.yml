@@ -32,6 +32,10 @@ jobs:
       - name: Build Symfony application image
         run: docker build --tag symfoerp-symfony:ci --file Dockerfile .
 
+      - name: Check PHP syntax
+        run: |
+          docker run --rm symfoerp-symfony:ci sh -lc 'find src config public -type f -name "*.php" -print0 | xargs -0 -r -n1 php -l'
+
       - name: Smoke test Symfony HTTP application
         run: |
           set -eu
