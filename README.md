@@ -50,6 +50,16 @@ L'image officielle Dolibarr est configurée pour initialiser automatiquement une
 
 Le workflow [Validate application](.github/workflows/validate.yml) s'exécute sur chaque push vers `main`, sur les Pull Requests et manuellement. Il vérifie la configuration Compose, construit l'image Symfony, contrôle la syntaxe PHP, teste le tableau de bord Symfony en HTTP, puis démarre MariaDB et Dolibarr pour contrôler la réponse HTTP d'une instance neuve.
 
+## Premier modèle métier Symfony
+
+Le modèle initial des tiers (clients, prospects et fournisseurs) et sa migration sont en place. La migration concerne uniquement la base Symfony ; elle n’importe ni ne modifie les données Dolibarr.
+
+Après le démarrage Docker, initialisez le schéma Symfony avec :
+
+```bash
+docker compose --env-file .env.docker exec symfony php bin/console doctrine:migrations:migrate --no-interaction
+```
+
 ## Persistance
 
 Les données sont conservées dans des volumes Docker :

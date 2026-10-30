@@ -58,6 +58,13 @@ jobs:
           echo "Symfony HTTP smoke test failed." >&2
           exit 1
 
+      - name: Apply and validate Symfony database migration
+        run: |
+          set -eu
+          docker compose --env-file .env.docker up --detach symfony
+          docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:migrations:migrate --no-interaction
+          docker compose --env-file .env.docker exec --no-TTY symfony php bin/console doctrine:schema:validate
+
       - name: Smoke test fresh Dolibarr installation
         run: |
           set -eu
