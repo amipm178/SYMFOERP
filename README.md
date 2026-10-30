@@ -71,7 +71,7 @@ echo
 docker compose --env-file .env.docker exec \
   -e SYMFOERP_ADMIN_EMAIL="$SYMFOERP_ADMIN_EMAIL" \
   -e SYMFOERP_ADMIN_PASSWORD="$SYMFOERP_ADMIN_PASSWORD" \
-  symfony php bin/console app:user:create
+  php bin/console app:user:create
 unset SYMFOERP_ADMIN_EMAIL SYMFOERP_ADMIN_PASSWORD
 ```
 
