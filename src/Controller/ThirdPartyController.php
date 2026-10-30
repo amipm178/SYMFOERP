@@ -117,6 +117,10 @@ final class ThirdPartyController extends AbstractController
                 'category' => (string) $request->request->get('category', ''),
                 'email' => (string) $request->request->get('email', ''),
                 'phone' => (string) $request->request->get('phone', ''),
+                'address' => (string) $request->request->get('address', ''),
+                'postal_code' => (string) $request->request->get('postal_code', ''),
+                'city' => (string) $request->request->get('city', ''),
+                'country' => (string) $request->request->get('country', ''),
             ];
             if (!$this->isCsrfTokenValid($tokenId, (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
