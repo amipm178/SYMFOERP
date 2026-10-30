@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\SalesInvoice;
+use App\Entity\CompanyProfile;
 use App\Entity\SalesOrder;
 use App\Entity\SalesPayment;
 use App\Repository\SalesInvoiceRepository;
@@ -48,6 +49,57 @@ final class SalesInvoiceController extends AbstractController
         });
 
         $this->addFlash('success', 'La facture brouillon a été créée. Vérifiez les informations légales avant toute émission.');
+        return $this->redirectToRoute('app_sales_invoice_show', ['id' => $invoice->getId()]);
+    }
+
+
+    #[Route('/{id}/issue', name: 'app_sales_invoice_issue', requirements: ['id' => '\\\\d+'], methods: ['POST'])]
+    public function issue(Request $request, SalesInvoice $invoice, EntityManagerInterface $entityManager): Response
+    {
+        if (!$this->isCsrfTokenValid('sales_invoice_issue_'.$invoice->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
+        }
+
+        try {
+            $entityManager->getConnection()->transactional(function () use ($entityManager, $invoice): void {
+                $entityManager->lock($invoice, LockMode::PESSIMISTIC_WRITE);
+                $profile = $entityManager->find(CompanyProfile::class, 1);
+                if (!$profile instanceof CompanyProfile) {
+                    throw new InvalidArgumentException('Configurez d’abord l’identité légale de l’entreprise.');
+                }
+                $profileErrors = $profile->getInvoiceReadinessErrors();
+                if ($profileErrors !== []) {
+                    throw new InvalidArgumentException(implode(' ', $profileErrors));
+                }
+                $customer = $invoice->getCustomer();
+                $customerSnapshot = [
+                    'name' => $customer->getName(),
+                    'address' => $customer->getAddress(),
+                    'postal_code' => $customer->getPostalCode(),
+                    'city' => $customer->getCity(),
+                    'country' => $customer->getCountry(),
+                    'email' => $customer->getEmail(),
+                ];
+                if (!$customerSnapshot['address'] || !$customerSnapshot['postal_code'] || !$customerSnapshot['city'] || !$customerSnapshot['country']) {
+                    throw new InvalidArgumentException('Complétez l’adresse de facturation du client avant émission.');
+                }
+                $connection = $entityManager->getConnection();
+                $year = (int) (new DateTimeImmutable('today'))->format('Y');
+                $connection->executeStatement(
+                    'INSERT INTO app_invoice_sequence (fiscal_year, last_number) VALUES (?, 1) ON DUPLICATE KEY UPDATE last_number = last_number + 1',
+                    [$year]
+                );
+                $sequence = (int) $connection->fetchOne('SELECT last_number FROM app_invoice_sequence WHERE fiscal_year = ? FOR UPDATE', [$year]);
+                $invoice->issue(sprintf('FAC-%d-%06d', $year, $sequence), new DateTimeImmutable('now'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+                $entityManager->flush();
+            });
+            $this->addFlash('success', 'La facture a été émise et numérotée.');
+        } catch (InvalidArgumentException $exception) {
+            $this->addFlash('error', $exception->getMessage());
+        } catch (\\Throwable) {
+            $this->addFlash('error', 'Émission impossible. Aucune facture n’a été confirmée comme émise.');
+        }
+
         return $this->redirectToRoute('app_sales_invoice_show', ['id' => $invoice->getId()]);
     }
 
