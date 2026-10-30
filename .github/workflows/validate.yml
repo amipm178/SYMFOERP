@@ -45,6 +45,9 @@ jobs:
       - name: Test sales invoice payment rules
         run: docker run --rm symfoerp-symfony:ci php tests/sales_invoice_entity_smoke.php
 
+      - name: Test product catalogue and stock invariants
+        run: docker run --rm symfoerp-symfony:ci php tests/product_entity_smoke.php
+
       - name: Smoke test Symfony HTTP application
         run: |
           set -eu
