@@ -33,6 +33,33 @@
         </dl>
         {% if invoice.notes %}<h3>Notes</h3><p>{{ invoice.notes|nl2br }}</p>{% endif %}
     </section>
+    <section class="card">
+        <h2>Suivi des règlements</h2>
+        <p><strong>Total TTC :</strong> {{ invoice.totalIncludingTax|number_format(2, ',', ' ') }} €</p>
+        <p><strong>Déjà réglé :</strong> {{ invoice.paidAmount|number_format(2, ',', ' ') }} €</p>
+        <p><strong>Reste à payer :</strong> {{ invoice.remainingAmount|number_format(2, ',', ' ') }} €</p>
+        {% if invoice.payments is not empty %}
+            <div class="table-scroll"><table class="data-table"><thead><tr><th>Date</th><th>Mode</th><th>Référence</th><th>Montant</th></tr></thead><tbody>
+            {% for payment in invoice.payments %}
+                <tr><td>{{ payment.paidAt|date('d/m/Y') }}</td><td>{{ {'bank_transfer':'Virement','card':'Carte','cash':'Espèces','check':'Chèque','other':'Autre'}[payment.method] ?? payment.method }}</td><td>{{ payment.reference ?? '—' }}</td><td>{{ payment.amount|number_format(2, ',', ' ') }} €</td></tr>
+            {% endfor %}
+            </tbody></table></div>
+        {% endif %}
+        {% if invoice.status in ['issued', 'partially_paid'] and invoice.remainingAmount > 0 %}
+            <h3>Enregistrer un règlement</h3>
+            <form method="post" action="{{ path('app_sales_invoice_payment', {id: invoice.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('sales_invoice_payment_' ~ invoice.id) }}">
+                <p><label for="payment-amount">Montant (€)</label><input id="payment-amount" type="number" name="amount" min="0.01" max="{{ invoice.remainingAmount|number_format(2, '.', '') }}" step="0.01" required></p>
+                <p><label for="payment-date">Date du paiement</label><input id="payment-date" type="date" name="paid_at" value="{{ 'now'|date('Y-m-d') }}" required></p>
+                <p><label for="payment-method">Mode</label><select id="payment-method" name="method" required><option value="bank_transfer">Virement</option><option value="card">Carte</option><option value="cash">Espèces</option><option value="check">Chèque</option><option value="other">Autre</option></select></p>
+                <p><label for="payment-reference">Référence</label><input id="payment-reference" type="text" name="reference" maxlength="120"></p>
+                <p><label for="payment-note">Note</label><textarea id="payment-note" name="note"></textarea></p>
+                <button type="submit">Enregistrer le règlement</button>
+            </form>
+        {% elseif invoice.status == 'draft' %}
+            <p>Les règlements seront disponibles après émission de la facture.</p>
+        {% endif %}
+    </section>
     {% if invoice.status == 'draft' %}
     <section class="card">
         <h2>Émission de la facture</h2>
