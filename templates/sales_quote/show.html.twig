@@ -7,7 +7,10 @@
     <p><a href="{{ path('app_sales_quotes') }}">← Tous les devis</a></p>
     {% for message in app.flashes('success') %}<p class="card" role="status">{{ message }}</p>{% endfor %}
     <h1>{{ quote.number }}</h1>
-    <p><a class="button" href="{{ path('app_sales_quote_pdf', {id: quote.id}) }}" target="_blank" rel="noopener">Télécharger / afficher le PDF</a></p>
+    <p>
+        <a class="button" href="{{ path('app_sales_quote_pdf', {id: quote.id}) }}" target="_blank" rel="noopener">Télécharger / afficher le PDF</a>
+        <a href="{{ path('app_sales_orders') }}">Voir les commandes</a>
+    </p>
     <section class="card">
         <p><strong>Client :</strong> {{ quote.customer.name }}</p>
         {% if quote.customer.email %}<p><strong>E-mail :</strong> <a href="mailto:{{ quote.customer.email }}">{{ quote.customer.email }}</a></p>{% endif %}
@@ -36,6 +39,21 @@
         </dl>
         {% if quote.notes %}<h3>Notes et conditions</h3><p>{{ quote.notes|nl2br }}</p>{% endif %}
     </section>
+    {% if order %}
+        <section class="card">
+            <h2>Commande générée</h2>
+            <p>Ce devis a été converti en commande <a href="{{ path('app_sales_order_show', {id: order.id}) }}">{{ order.number }}</a>.</p>
+        </section>
+    {% elseif quote.status == 'accepted' %}
+        <section class="card">
+            <h2>Créer la commande client</h2>
+            <p>Le devis accepté sera copié dans une commande distincte. Les lignes et les prix d'origine seront conservés.</p>
+            <form method="post" action="{{ path('app_sales_quote_convert', {id: quote.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('sales_quote_convert_' ~ quote.id) }}">
+                <button type="submit">Convertir en commande</button>
+            </form>
+        </section>
+    {% endif %}
     {% if allowed_actions is not empty %}
         <section class="card">
             <h2>Faire évoluer le devis</h2>
