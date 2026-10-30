@@ -54,7 +54,7 @@ Le workflow [Validate application](.github/workflows/validate.yml) s'exécute su
 
 ## Premier modèle métier Symfony
 
-Le modèle initial des tiers (clients, prospects et fournisseurs) et sa migration sont en place. La migration concerne uniquement la base Symfony ; elle n’importe ni ne modifie les données Dolibarr.
+Le modèle initial des tiers (clients, prospects et fournisseurs) et sa migration sont en place. La migration concerne uniquement la base Symfony ; elle n’importe ni ne modifie les données Dolibarr. La liste est paginée par 25 fiches, avec recherche sur le nom, l’e-mail et le téléphone et filtrage par catégorie ; les filtres sont conservés pendant la navigation.
 
 ## Module ventes : devis
 
