@@ -12,8 +12,7 @@ use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
 
 #[ORM\Entity(repositoryClass: SalesQuoteRepository::class)]
-#[ORM\Table(name: 'app_sales_quote')]
-#[ORM\UniqueConstraint(name: 'uniq_sales_quote_number', columns: ['number'])]
+#[ORM\Table(name: 'app_sales_quote', uniqueConstraints: [new ORM\UniqueConstraint(name: 'uniq_sales_quote_number', columns: ['number'])])]
 #[ORM\Index(name: 'idx_sales_quote_customer_status', columns: ['third_party_id', 'status'])]
 class SalesQuote
 {
