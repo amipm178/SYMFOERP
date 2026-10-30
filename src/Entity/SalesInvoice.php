@@ -91,7 +91,7 @@ class SalesInvoice
         $this->payments = new ArrayCollection();
 
         foreach ($order->getLines() as $line) {
-            $this->addLine(new SalesInvoiceLine($line->getDescription(), $line->getQuantity(), $line->getUnitPrice(), $line->getVatRate(), $line->getPosition()));
+            $this->addLine(new SalesInvoiceLine($line->getDescription(), $line->getQuantity(), $line->getUnitPrice(), $line->getVatRate(), $line->getPosition(), $line->getProduct()));
         }
         if ($this->lines->isEmpty()) {
             throw new InvalidArgumentException('An order without lines cannot be invoiced.');
