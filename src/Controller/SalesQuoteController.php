@@ -72,6 +72,9 @@ final class SalesQuoteController extends AbstractController
                 $errors[] = 'Veuillez sélectionner un client valide.';
             }
             try {
+                if ($values['valid_until'] === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $values['valid_until'])) {
+                    throw new \InvalidArgumentException('Invalid date format.');
+                }
                 $validUntil = new DateTimeImmutable($values['valid_until']);
                 if ($validUntil < new DateTimeImmutable('today')) {
                     $errors[] = 'La date de validité doit être aujourd’hui ou ultérieure.';
@@ -86,6 +89,10 @@ final class SalesQuoteController extends AbstractController
 
             $parsedLines = [];
             foreach ($lineValues as $index => $line) {
+                if (!is_array($line)) {
+                    $errors[] = sprintf('Ligne %d : données invalides.', $index + 1);
+                    continue;
+                }
                 $description = trim((string) ($line['description'] ?? ''));
                 $quantity = trim((string) ($line['quantity'] ?? ''));
                 $unitPrice = trim((string) ($line['unit_price'] ?? ''));
