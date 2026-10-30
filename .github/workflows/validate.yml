@@ -1,0 +1,32 @@
+name: Validate application
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compose-and-symfony:
+    name: Compose configuration and Symfony image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare CI environment
+        run: cp .env.docker.example .env.docker
+
+      - name: Validate Docker Compose configuration
+        run: docker compose --env-file .env.docker config --quiet
+
+      - name: Build Symfony application image
+        run: docker build --tag symfoerp-symfony:ci --file Dockerfile .
