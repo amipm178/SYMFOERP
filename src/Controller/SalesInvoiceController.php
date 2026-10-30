@@ -106,7 +106,7 @@ final class SalesInvoiceController extends AbstractController
     }
 
 
-    #[Route('/{id}/pdf', name: 'app_sales_invoice_pdf', requirements: ['id' => '\\\\d+'], methods: ['GET'])]
+    #[Route('/{id}/pdf', name: 'app_sales_invoice_pdf', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function pdf(SalesInvoice $invoice): Response
     {
         if ($invoice->getNumber() === null || $invoice->getSellerSnapshot() === null || $invoice->getCustomerSnapshot() === null) {
