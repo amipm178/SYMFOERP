@@ -97,7 +97,9 @@ final class PurchaseOrderController extends AbstractController
                 $quantities = $request->request->all('received');
                 foreach ($order->getLines() as $line) {
                     $quantity = trim((string) ($quantities[(string) $line->getId()] ?? ''));
-                    if ($quantity === '' || (float) $quantity == 0.0) { continue; }
+                    if ($quantity === '') { continue; }
+                    if (!is_numeric($quantity)) { throw new InvalidArgumentException('Une quantité réceptionnée doit être numérique.'); }
+                    if ((float) $quantity == 0.0) { continue; }
                     $product = $line->getProduct();
                     $em->lock($product, LockMode::PESSIMISTIC_WRITE);
                     $line->receive($quantity);
