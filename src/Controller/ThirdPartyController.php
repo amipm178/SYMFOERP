@@ -54,6 +54,7 @@ final class ThirdPartyController extends AbstractController
             'category' => $thirdParty->getCategory(),
             'email' => '',
             'phone' => '',
+            'address' => '', 'postal_code' => '', 'city' => '', 'country' => '',
         ];
 
         if ($request->isMethod('POST')) {
@@ -62,6 +63,10 @@ final class ThirdPartyController extends AbstractController
                 'category' => (string) $request->request->get('category', ''),
                 'email' => (string) $request->request->get('email', ''),
                 'phone' => (string) $request->request->get('phone', ''),
+                'address' => (string) $request->request->get('address', ''),
+                'postal_code' => (string) $request->request->get('postal_code', ''),
+                'city' => (string) $request->request->get('city', ''),
+                'country' => (string) $request->request->get('country', ''),
             ];
             if (!$this->isCsrfTokenValid('third_party_create', (string) $request->request->get('_token'))) {
                 throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
@@ -103,6 +108,7 @@ final class ThirdPartyController extends AbstractController
             'category' => $thirdParty->getCategory(),
             'email' => $thirdParty->getEmail() ?? '',
             'phone' => $thirdParty->getPhone() ?? '',
+            'address' => $thirdParty->getAddress() ?? '', 'postal_code' => $thirdParty->getPostalCode() ?? '', 'city' => $thirdParty->getCity() ?? '', 'country' => $thirdParty->getCountry() ?? '',
         ];
 
         if ($request->isMethod('POST')) {
@@ -177,7 +183,11 @@ final class ThirdPartyController extends AbstractController
         $thirdParty->setName($name)
             ->setCategory($category)
             ->setEmail($email)
-            ->setPhone($phone);
+            ->setPhone($phone)
+            ->setAddress((string) $request->request->get('address', ''))
+            ->setPostalCode((string) $request->request->get('postal_code', ''))
+            ->setCity((string) $request->request->get('city', ''))
+            ->setCountry((string) $request->request->get('country', ''));
 
         return [];
     }
