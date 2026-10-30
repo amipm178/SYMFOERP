@@ -38,8 +38,11 @@ final class ThirdPartyRepository extends ServiceEntityRepository
     {
         $query = $this->createQueryBuilder('thirdParty');
         if ($term !== '') {
-            $query->andWhere('LOWER(thirdParty.name) LIKE :term OR LOWER(thirdParty.email) LIKE :term OR LOWER(thirdParty.phone) LIKE :term')
-                ->setParameter('term', '%'.mb_strtolower($term).'%');
+            $query->andWhere($query->expr()->orX(
+                'LOWER(thirdParty.name) LIKE :term',
+                'LOWER(thirdParty.email) LIKE :term',
+                'LOWER(thirdParty.phone) LIKE :term'
+            ))->setParameter('term', '%'.mb_strtolower($term).'%');
         }
         if (in_array($category, [
             ThirdParty::CATEGORY_CUSTOMER,
