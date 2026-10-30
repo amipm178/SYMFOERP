@@ -4,6 +4,7 @@
     <p class="muted">GESTION COMMERCIALE / VENTES</p>
     <p><a href="{{ path('app_sales_orders') }}">← Toutes les commandes</a></p>
     {% for message in app.flashes('success') %}<p class="card" role="status">{{ message }}</p>{% endfor %}
+    {% for message in app.flashes('error') %}<p class="card" role="alert">{{ message }}</p>{% endfor %}
     <h1>{{ order.number }}</h1>
     <section class="card">
         <p><strong>Client :</strong> {{ order.customer.name }}</p>
