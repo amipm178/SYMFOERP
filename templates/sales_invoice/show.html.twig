@@ -1,14 +1,15 @@
 {% extends 'base.html.twig' %}
-{% block title %}Facture brouillon #{{ invoice.id }} · SYMFOERP{% endblock %}
+{% block title %}{{ invoice.number ?? ('Brouillon #' ~ invoice.id) }} · SYMFOERP{% endblock %}
 {% block body %}
     <p class="muted">GESTION COMMERCIALE / FACTURATION</p>
     <p><a href="{{ path('app_sales_invoices') }}">← Toutes les factures</a></p>
     {% for message in app.flashes('success') %}<p class="card" role="status">{{ message }}</p>{% endfor %}
     {% for message in app.flashes('error') %}<p class="card" role="alert">{{ message }}</p>{% endfor %}
-    <h1>Facture brouillon #{{ invoice.id }}</h1>
+    <h1>{{ invoice.number ?? ('Facture brouillon #' ~ invoice.id) }}</h1>
     <section class="card">
         <p><strong>État :</strong> {{ {'draft':'Brouillon — non émise','issued':'Émise','partially_paid':'Partiellement réglée','paid':'Payée','overdue':'En retard','cancelled':'Annulée'}[invoice.effectiveStatus] ?? invoice.effectiveStatus }}</p>
         <p><strong>Client :</strong> {{ invoice.customer.name }}</p>
+        {% if invoice.number %}<p><strong>Numéro :</strong> {{ invoice.number }}</p><p><strong>Date d’émission :</strong> {{ invoice.issuedAt|date('d/m/Y H:i') }}</p>{% endif %}
         <p><strong>Commande source :</strong> <a href="{{ path('app_sales_order_show', {id: invoice.order.id}) }}">{{ invoice.order.number }}</a></p>
         <p><strong>Date de préparation :</strong> {{ invoice.invoiceDate|date('d/m/Y') }}</p>
         <p><strong>Échéance proposée :</strong> {{ invoice.dueDate|date('d/m/Y') }}</p>
@@ -32,8 +33,27 @@
         </dl>
         {% if invoice.notes %}<h3>Notes</h3><p>{{ invoice.notes|nl2br }}</p>{% endif %}
     </section>
+    {% if invoice.status == 'draft' %}
     <section class="card">
-        <h2>Émission désactivée</h2>
-        <p>Cette facture est un document de préparation interne. Son émission et sa numérotation définitive resteront indisponibles tant que l’identité légale du vendeur, les mentions obligatoires et les paramètres de facturation ne seront pas configurés et validés.</p>
+        <h2>Émission de la facture</h2>
+        {% if issue_errors is not empty %}
+            <p>L’émission est bloquée tant que les éléments suivants ne sont pas complétés :</p>
+            <ul>{% for error in issue_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            <p><a href="{{ path('app_company_settings') }}">Configurer l’identité de l’entreprise</a> · <a href="{{ path('app_third_party_edit', {id: invoice.customer.id}) }}">Compléter la fiche client</a></p>
+        {% else %}
+            <p>L’émission figera les coordonnées du vendeur et du client et attribuera le prochain numéro annuel.</p>
+            <form method="post" action="{{ path('app_sales_invoice_issue', {id: invoice.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('sales_invoice_issue_' ~ invoice.id) }}">
+                <button type="submit">Émettre définitivement la facture</button>
+            </form>
+        {% endif %}
     </section>
+    {% endif %}
+    {% if invoice.sellerSnapshot %}
+    <section class="card">
+        <h2>Identité figée sur la facture</h2>
+        <h3>Vendeur</h3><p>{{ invoice.sellerSnapshot.legal_name }}<br>{{ invoice.sellerSnapshot.address }}<br>{{ invoice.sellerSnapshot.postal_code }} {{ invoice.sellerSnapshot.city }} · {{ invoice.sellerSnapshot.country }}<br>SIREN : {{ invoice.sellerSnapshot.siren }} · SIRET : {{ invoice.sellerSnapshot.siret }}</p>
+        <h3>Client</h3><p>{{ invoice.customerSnapshot.name }}<br>{{ invoice.customerSnapshot.address }}<br>{{ invoice.customerSnapshot.postal_code }} {{ invoice.customerSnapshot.city }} · {{ invoice.customerSnapshot.country }}</p>
+    </section>
+    {% endif %}
 {% endblock %}
