@@ -98,7 +98,7 @@ final class SalesInvoiceController extends AbstractController
             $this->addFlash('success', 'La facture a été émise et numérotée.');
         } catch (InvalidArgumentException $exception) {
             $this->addFlash('error', $exception->getMessage());
-        } catch (\\Throwable) {
+        } catch (\Throwable) {
             $this->addFlash('error', 'Émission impossible. Aucune facture n’a été confirmée comme émise.');
         }
 
