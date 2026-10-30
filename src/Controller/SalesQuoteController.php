@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\SalesQuote;
+use App\Entity\Product;
 use App\Entity\SalesQuoteLine;
 use App\Entity\SalesOrder;
 use App\Entity\ThirdParty;
 use App\Repository\SalesQuoteRepository;
+use App\Repository\ProductRepository;
 use App\Repository\SalesOrderRepository;
 use App\Repository\ThirdPartyRepository;
 use DateTimeImmutable;
@@ -53,12 +55,13 @@ final class SalesQuoteController extends AbstractController
     }
 
     #[Route('/new', name: 'app_sales_quote_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, ThirdPartyRepository $thirdParties, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, ThirdPartyRepository $thirdParties, ProductRepository $productRepository, EntityManagerInterface $entityManager): Response
     {
         $customers = $thirdParties->search('', ThirdParty::CATEGORY_CUSTOMER, 1, 100);
+        $products = $productRepository->findBy(['active' => true], ['name' => 'ASC'], 500);
         $errors = [];
         $values = ['customer_id' => '', 'valid_until' => (new DateTimeImmutable('+30 days'))->format('Y-m-d'), 'notes' => ''];
-        $lineValues = [['description' => '', 'quantity' => '1', 'unit_price' => '0.00', 'vat_rate' => '20.00']];
+        $lineValues = [['product_id' => '', 'description' => '', 'quantity' => '1', 'unit_price' => '', 'vat_rate' => '']];
 
         if ($request->isMethod('POST')) {
             $values = [
@@ -103,15 +106,30 @@ final class SalesQuoteController extends AbstractController
                     $errors[] = sprintf('Ligne %d : données invalides.', $index + 1);
                     continue;
                 }
+                $productId = trim((string) ($line['product_id'] ?? ''));
+                $selectedProduct = null;
+                if ($productId !== '') {
+                    $selectedProduct = ctype_digit($productId) ? $productRepository->find((int) $productId) : null;
+                    if (!$selectedProduct instanceof Product || !$selectedProduct->isActive()) {
+                        $errors[] = sprintf('Ligne %d : produit sélectionné invalide ou archivé.', $index + 1);
+                        continue;
+                    }
+                }
                 $description = trim((string) ($line['description'] ?? ''));
                 $quantity = trim((string) ($line['quantity'] ?? ''));
                 $unitPrice = trim((string) ($line['unit_price'] ?? ''));
                 $vatRate = trim((string) ($line['vat_rate'] ?? ''));
-                if ($description === '' && $quantity === '' && $unitPrice === '' && $vatRate === '') {
+                if ($description === '' && $quantity === '' && $unitPrice === '' && $vatRate === '' && $selectedProduct === null) {
                     continue;
                 }
+                $description = $description !== '' ? $description : ($selectedProduct?->getName() ?? '');
+                $quantity = $quantity !== '' ? $quantity : '1';
+                $unitPrice = $unitPrice !== '' ? $unitPrice : ($selectedProduct?->getSalePrice() ?? '');
+                $vatRate = $vatRate !== '' ? $vatRate : ($selectedProduct?->getVatRate() ?? '');
                 try {
-                    $parsedLines[] = new SalesQuoteLine($description, $quantity, $unitPrice, $vatRate, $index + 1);
+                    $quoteLine = new SalesQuoteLine($description, $quantity, $unitPrice, $vatRate, $index + 1);
+                    $quoteLine->setProduct($selectedProduct);
+                    $parsedLines[] = $quoteLine;
                 } catch (InvalidArgumentException $exception) {
                     $errors[] = sprintf('Ligne %d : %s', $index + 1, $exception->getMessage());
                 }
@@ -140,6 +158,7 @@ final class SalesQuoteController extends AbstractController
 
         return $this->render('sales_quote/new.html.twig', [
             'customers' => $customers,
+            'products' => $products,
             'values' => $values,
             'line_values' => $lineValues,
             'errors' => $errors,
