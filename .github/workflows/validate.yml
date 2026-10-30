@@ -39,6 +39,9 @@ jobs:
       - name: Test third-party entity invariants
         run: docker run --rm symfoerp-symfony:ci php tests/third_party_entity_smoke.php
 
+      - name: Test sales quote entity and totals
+        run: docker run --rm symfoerp-symfony:ci php tests/sales_quote_entity_smoke.php
+
       - name: Smoke test Symfony HTTP application
         run: |
           set -eu
@@ -79,7 +82,7 @@ jobs:
               token = None
               def handle_starttag(self, tag, attrs):
                   values = dict(attrs)
-                  if tag == "input" and values.get("name") == "_csrf_token":
+                  if tag == "input" and values.get("name") in ("_csrf_token", "_token"):
                       self.token = values.get("value")
 
           cookies = http.cookiejar.CookieJar()
@@ -103,7 +106,52 @@ jobs:
           client.open(urllib.request.Request(base + "/logout", data=logout_payload)).read()
           after_logout = client.open(base + "/third-parties")
           assert after_logout.geturl().endswith("/login"), "Logout did not invalidate the authenticated session"
-          print("Symfony login, logout, session, CSRF and protected third-party registry passed.")
+          sales_page = client.open(base + "/sales/quotes")
+          sales_html = sales_page.read().decode()
+          assert "Devis" in sales_html, "Authenticated user could not open the sales quotes module"
+          quote_form = client.open(base + "/sales/quotes/new").read().decode()
+          assert "Nouveau devis" in quote_form, "Sales quote creation form did not render"
+          third_party_form = client.open(base + "/third-parties/new").read().decode()
+          third_party_parser = TokenParser()
+          third_party_parser.feed(third_party_form)
+          assert third_party_parser.token, "Third-party creation CSRF token is missing"
+          client.open(urllib.request.Request(base + "/third-parties/new", data=urllib.parse.urlencode({
+              "name": "Client CI",
+              "category": "customer",
+              "email": "client-ci@example.test",
+              "phone": "",
+              "_token": third_party_parser.token,
+          }).encode()))
+          quote_form = client.open(base + "/sales/quotes/new").read().decode()
+          quote_parser = TokenParser()
+          quote_parser.feed(quote_form)
+          assert quote_parser.token, "Sales quote creation CSRF token is missing"
+          import re
+          from datetime import date, timedelta
+          customer_match = re.search(r'<option value="(\\d+)"[^>]*>Client CI</option>', quote_form)
+          assert customer_match, "New customer was not available in the quote form"
+          quote_payload = {
+              "customer_id": customer_match.group(1),
+              "valid_until": (date.today() + timedelta(days=30)).isoformat(),
+              "notes": "Created by CI",
+              "_token": quote_parser.token,
+              "lines[0][description]": "Prestation de test",
+              "lines[0][quantity]": "2",
+              "lines[0][unit_price]": "50.00",
+              "lines[0][vat_rate]": "20.00",
+          }
+          quote_response = client.open(urllib.request.Request(base + "/sales/quotes/new", data=urllib.parse.urlencode(quote_payload).encode()))
+          quote_html = quote_response.read().decode()
+          assert "DEV-" in quote_html, "Created quote number was not displayed"
+          assert "120,00 €" in quote_html, "Quote total including VAT is incorrect"
+          quote_parser = TokenParser()
+          quote_parser.feed(quote_html)
+          quote_id_match = re.search(r"/sales/quotes/(\\d+)", quote_response.geturl())
+          assert quote_id_match, "Created quote detail URL is invalid"
+          status_payload = urllib.parse.urlencode({"_token": quote_parser.token, "status": "sent"}).encode()
+          sent_response = client.open(urllib.request.Request(base + "/sales/quotes/" + quote_id_match.group(1) + "/status", data=status_payload))
+          assert "Envoyé" in sent_response.read().decode(), "Quote status transition to sent failed"
+          print("Symfony authentication, third-party registry, sales quote creation, VAT totals and status transition passed.")
           PY
 
       - name: Smoke test fresh Dolibarr installation
