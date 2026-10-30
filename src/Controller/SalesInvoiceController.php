@@ -9,6 +9,8 @@ use App\Entity\CompanyProfile;
 use App\Entity\SalesOrder;
 use App\Entity\SalesPayment;
 use App\Repository\SalesInvoiceRepository;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Doctrine\ORM\EntityManagerInterface;
@@ -101,6 +103,33 @@ final class SalesInvoiceController extends AbstractController
         }
 
         return $this->redirectToRoute('app_sales_invoice_show', ['id' => $invoice->getId()]);
+    }
+
+
+    #[Route('/{id}/pdf', name: 'app_sales_invoice_pdf', requirements: ['id' => '\\\\d+'], methods: ['GET'])]
+    public function pdf(SalesInvoice $invoice): Response
+    {
+        if ($invoice->getNumber() === null || $invoice->getSellerSnapshot() === null || $invoice->getCustomerSnapshot() === null) {
+            throw $this->createNotFoundException('Le PDF est disponible uniquement après émission.');
+        }
+        $options = new Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', false);
+        $options->set('isPhpEnabled', false);
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($this->renderView('sales_invoice/pdf.html.twig', [
+            'invoice' => $invoice,
+            'seller' => $invoice->getSellerSnapshot(),
+            'customer' => $invoice->getCustomerSnapshot(),
+        ]), 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        return new Response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$invoice->getNumber().'.pdf"',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     #[Route('/{id}/payments', name: 'app_sales_invoice_payment', requirements: ['id' => '\\d+'], methods: ['POST'])]
