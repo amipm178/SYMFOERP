@@ -45,7 +45,7 @@ jobs:
           }
           trap cleanup EXIT
           for attempt in $(seq 1 30); do
-            if curl --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
+            if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
               grep -q "Tiers &amp; CRM\|Tiers & CRM" /tmp/symfoerp-home.html
               echo "Symfony dashboard responded successfully."
               exit 0
