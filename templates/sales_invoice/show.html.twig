@@ -84,6 +84,7 @@
     <section class="card">
         <h2>Identité figée sur la facture</h2>
         <h3>Vendeur</h3><p>{{ invoice.sellerSnapshot.legal_name }}<br>{{ invoice.sellerSnapshot.address }}<br>{{ invoice.sellerSnapshot.postal_code }} {{ invoice.sellerSnapshot.city }} · {{ invoice.sellerSnapshot.country }}<br>SIREN : {{ invoice.sellerSnapshot.siren }} · SIRET : {{ invoice.sellerSnapshot.siret }}</p>
+        <p><strong>TVA :</strong> {{ invoice.sellerSnapshot.vat_regime_note }}</p><p><strong>Conditions de paiement :</strong> {{ invoice.sellerSnapshot.payment_terms }}</p><p><strong>Pénalités de retard :</strong> {{ invoice.sellerSnapshot.late_penalty_rate }}</p><p><strong>Indemnité de recouvrement :</strong> {{ invoice.sellerSnapshot.recovery_fee }} €</p>
         <h3>Client</h3><p>{{ invoice.customerSnapshot.name }}<br>{{ invoice.customerSnapshot.address }}<br>{{ invoice.customerSnapshot.postal_code }} {{ invoice.customerSnapshot.city }} · {{ invoice.customerSnapshot.country }}</p>
     </section>
     {% endif %}
