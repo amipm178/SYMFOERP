@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Entity\ThirdParty;
+use App\Entity\User;
 
 require dirname(__DIR__).'/vendor/autoload.php';
 
@@ -44,4 +45,25 @@ try {
     // Expected validation failure.
 }
 
-echo "Third-party entity smoke tests passed.\n";
+$user = new User('  ADMIN@EXAMPLE.TEST ');
+expect($user->getEmail() === 'admin@example.test', 'User email must be normalized.');
+expect(in_array('ROLE_USER', $user->getRoles(), true), 'Every user must receive ROLE_USER.');
+$user->setRoles(['ROLE_ADMIN']);
+expect(in_array('ROLE_ADMIN', $user->getRoles(), true), 'Administrator role must be retained.');
+expect(in_array('ROLE_USER', $user->getRoles(), true), 'Administrator must inherit ROLE_USER.');
+
+try {
+    new User('not-an-email');
+    throw new RuntimeException('An invalid email address was accepted.');
+} catch (InvalidArgumentException) {
+    // Expected validation failure.
+}
+
+try {
+    $user->setRoles(['ADMIN']);
+    throw new RuntimeException('An invalid role was accepted.');
+} catch (InvalidArgumentException) {
+    // Expected validation failure.
+}
+
+echo "Third-party and user entity smoke tests passed.\n";
