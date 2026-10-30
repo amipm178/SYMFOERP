@@ -21,7 +21,7 @@ final class ThirdPartyController extends AbstractController
     #[Route('/third-parties', name: 'app_third_parties', methods: ['GET'])]
     public function index(Request $request, ThirdPartyRepository $thirdParties): Response
     {
-        $search = trim((string) $request->query->get('q', ''));
+        $search = mb_substr(trim((string) $request->query->get('q', '')), 0, 120);
         $category = (string) $request->query->get('category', '');
 
         return $this->render('third_party/index.html.twig', [
