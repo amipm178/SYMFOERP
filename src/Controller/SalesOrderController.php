@@ -42,13 +42,43 @@ final class SalesOrderController extends AbstractController
         if (!$this->isCsrfTokenValid('sales_order_status_'.$order->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
         }
+
         $target = (string) $request->request->get('status', '');
-        if (!in_array($target, $this->allowedActions($order->getStatus()), true)) {
-            throw $this->createAccessDeniedException('Cette transition de statut n’est pas autorisée.');
+        try {
+            $entityManager->getConnection()->transactional(function () use ($target, $order, $entityManager): void {
+                $entityManager->lock($order, LockMode::PESSIMISTIC_WRITE);
+                if (!in_array($target, $this->allowedActions($order->getStatus()), true)) {
+                    throw new InvalidArgumentException('Cette transition de statut n’est plus autorisée.');
+                }
+
+                if ($target === SalesOrder::STATUS_FULFILLED) {
+                    foreach ($order->getLines() as $line) {
+                        $product = $line->getProduct();
+                        if ($product === null || !$product->isStockTracked()) {
+                            continue;
+                        }
+
+                        $entityManager->lock($product, LockMode::PESSIMISTIC_WRITE);
+                        $quantity = number_format(-(float) $line->getQuantity(), 3, '.', '');
+                        $product->adjustStock($quantity);
+                        $entityManager->persist(new ProductStockMovement(
+                            $product,
+                            $quantity,
+                            'sale',
+                            sprintf('Livraison commande %s · ligne %d', $order->getNumber() ?? ('#'.$order->getId()), $line->getId())
+                        ));
+                    }
+                }
+
+                $order->setStatus($target);
+                $entityManager->flush();
+            });
+            $this->addFlash('success', $target === SalesOrder::STATUS_FULFILLED
+                ? 'La commande est terminée et les sorties de stock ont été enregistrées.'
+                : 'Le statut de la commande a été mis à jour.');
+        } catch (InvalidArgumentException $exception) {
+            $this->addFlash('error', $exception->getMessage());
         }
-        $order->setStatus($target);
-        $entityManager->flush();
-        $this->addFlash('success', 'Le statut de la commande a été mis à jour.');
 
         return $this->redirectToRoute('app_sales_order_show', ['id' => $order->getId()]);
     }
