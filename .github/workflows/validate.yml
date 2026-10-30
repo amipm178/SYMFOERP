@@ -173,11 +173,18 @@ jobs:
           first_order_url = order_response.geturl()
           duplicate_response = client.open(urllib.request.Request(base + "/sales/quotes/" + quote_id_match.group(1) + "/convert", data=convert_payload))
           assert duplicate_response.geturl() == first_order_url, "Repeated quote conversion created a different order"
+          order_parser = TokenParser()
+          order_parser.feed(order_html)
+          order_id_match = re.search(r"/sales/orders/(\\d+)", first_order_url)
+          assert order_id_match, "Created order detail URL is invalid"
+          fulfil_payload = urllib.parse.urlencode({"_token": order_parser.token, "status": "fulfilled"}).encode()
+          fulfil_response = client.open(urllib.request.Request(base + "/sales/orders/" + order_id_match.group(1) + "/status", data=fulfil_payload))
+          assert "Terminée" in fulfil_response.read().decode(), "Sales order status transition to fulfilled failed"
           pdf_response = client.open(base + "/sales/quotes/" + quote_id_match.group(1) + "/pdf")
           pdf_content = pdf_response.read()
           assert pdf_response.headers.get_content_type() == "application/pdf", "Quote PDF route returned the wrong content type"
           assert pdf_content.startswith(b"%PDF-"), "Quote PDF route did not return a valid PDF document"
-          print("Symfony authentication, third-party registry, quote creation, VAT totals, acceptance, order conversion and PDF export passed.")
+          print("Symfony authentication, third-party registry, quote creation, VAT totals, acceptance, idempotent order conversion, order completion and PDF export passed.")
           PY
 
       - name: Smoke test fresh Dolibarr installation
