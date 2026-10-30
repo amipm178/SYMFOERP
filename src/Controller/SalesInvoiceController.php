@@ -7,7 +7,6 @@ namespace App\Controller;
 use App\Entity\SalesInvoice;
 use App\Entity\SalesOrder;
 use App\Repository\SalesInvoiceRepository;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\LockMode;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
