@@ -175,7 +175,7 @@ jobs:
           assert duplicate_response.geturl() == first_order_url, "Repeated quote conversion created a different order"
           order_parser = TokenParser()
           order_parser.feed(order_html)
-          order_id_match = re.search(r"/sales/orders/(\\d+)", first_order_url)
+          order_id_match = re.search(r"/sales/orders/(\d+)", first_order_url)
           assert order_id_match, "Created order detail URL is invalid"
           fulfil_payload = urllib.parse.urlencode({"_token": order_parser.token, "status": "fulfilled"}).encode()
           fulfil_response = client.open(urllib.request.Request(base + "/sales/orders/" + order_id_match.group(1) + "/status", data=fulfil_payload))
