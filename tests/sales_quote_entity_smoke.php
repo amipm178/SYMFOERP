@@ -35,6 +35,8 @@ expectSales($order->getLines()->count() === 2, 'Order conversion must copy all q
 expectSales($order->getTotalExcludingTax() === $quote->getTotalExcludingTax(), 'Converted order subtotal must match the accepted quote.');
 expectSales($order->getTotalTax() === $quote->getTotalTax(), 'Converted order VAT must match the accepted quote.');
 expectSales($order->getTotalIncludingTax() === $quote->getTotalIncludingTax(), 'Converted order total must match the accepted quote.');
+$order->setStatus(SalesOrder::STATUS_FULFILLED);
+expectSales($order->getStatus() === SalesOrder::STATUS_FULFILLED, 'Order status must transition to fulfilled.');
 try {
     new SalesOrder(new SalesQuote($customer));
     throw new RuntimeException('A draft quote was converted into an order.');
