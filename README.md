@@ -7,7 +7,7 @@ Projet ERP dont l'objectif est de faire évoluer progressivement Dolibarr vers u
 - Symfony 7.4 : socle applicatif initial.
 - Dolibarr 24.0.2 : code source officiel référencé dans le sous-module Git `dolibarr/`.
 - Docker Compose : installation neuve de Dolibarr avec sa propre base MariaDB et volumes persistants.
-- GitHub Actions : validation de la configuration Compose, construction de l'image Symfony et test HTTP du tableau de bord.
+- GitHub Actions : validation de Compose, construction et vérification de Symfony, et démarrage HTTP des deux applications.
 - Aucune ancienne base n'est importée ou modifiée.
 
 Pendant cette première phase, Dolibarr démarre avec son runtime officiel dans un conteneur dédié. Cela permet de valider une installation propre avant de porter progressivement ses fonctions dans Symfony. Le code Dolibarr n'est pas chargé directement comme un bundle Symfony.
@@ -48,7 +48,7 @@ L'image officielle Dolibarr est configurée pour initialiser automatiquement une
 
 ## Intégration continue
 
-Le workflow [Validate application](.github/workflows/validate.yml) s'exécute sur chaque push vers `main`, sur les Pull Requests et manuellement. Il vérifie la configuration Compose, construit l'image Symfony, contrôle la syntaxe PHP des sources puis démarre temporairement cette image pour vérifier que le tableau de bord répond en HTTP.
+Le workflow [Validate application](.github/workflows/validate.yml) s'exécute sur chaque push vers `main`, sur les Pull Requests et manuellement. Il vérifie la configuration Compose, construit l'image Symfony, contrôle la syntaxe PHP, teste le tableau de bord Symfony en HTTP, puis démarre MariaDB et Dolibarr pour contrôler la réponse HTTP d'une instance neuve.
 
 ## Persistance
 
