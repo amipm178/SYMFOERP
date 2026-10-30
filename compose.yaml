@@ -40,6 +40,7 @@ services:
     networks:
       - symfony_net
 
+  # Fresh Dolibarr 24.0.2 installation; no legacy database import.
   dolibarr:
     image: dolibarr/dolibarr:24.0.2-php8.5
     container_name: symfoerp-dolibarr
@@ -48,9 +49,12 @@ services:
       db_dolibarr:
         condition: service_healthy
     environment:
+      DOLI_INSTALL_AUTO: "1"
+      DOLI_INIT_DEMO: "0"
+      DOLI_PROD: "1"
       DOLI_DB_TYPE: mysqli
       DOLI_DB_HOST: db_dolibarr
-      DOLI_DB_HOST_PORT: 3306
+      DOLI_DB_HOST_PORT: "3306"
       DOLI_DB_NAME: ${DOLI_DB_NAME}
       DOLI_DB_USER: ${DOLI_DB_USER}
       DOLI_DB_PASSWORD: ${DOLI_DB_PASSWORD}
@@ -59,9 +63,10 @@ services:
       DOLI_ADMIN_PASSWORD: ${DOLI_ADMIN_PASSWORD}
       DOLI_INSTANCE_UNIQUE_ID: ${DOLI_INSTANCE_UNIQUE_ID}
       DOLI_CRON: "0"
-      DOLI_CRON_KEY: ${DOLI_CRON_KEY}
-      DOLI_INIT_DEMO: "0"
-      DOLI_PROD: "1"
+      PHP_INI_DATE_TIMEZONE: Europe/Paris
+      PHP_INI_MEMORY_LIMIT: 512M
+      PHP_INI_UPLOAD_MAX_FILESIZE: 64M
+      PHP_INI_POST_MAX_SIZE: 66M
     ports:
       - "8080:80"
     volumes:
