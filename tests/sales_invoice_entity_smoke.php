@@ -46,12 +46,13 @@ $profile->update([
 ]);
 expectInvoice($profile->getInvoiceReadinessErrors() === [], 'Complete seller profile must be ready for invoice issuance.');
 $customerSnapshot = ['name' => 'Client facture test', 'address' => '2 rue Client', 'postal_code' => '17000', 'city' => 'La Rochelle'];
-$invoice->issue('FAC-2026-000001', new DateTimeImmutable('2026-10-30 12:00:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+$invoice->issue('FAC-2026-000001', new DateTimeImmutable('2026-10-30 12:00:00'), new DateTimeImmutable('2026-11-29 12:00:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
 expectInvoice($invoice->getStatus() === SalesInvoice::STATUS_ISSUED, 'Issuing a draft must change its status.');
 expectInvoice($invoice->getNumber() === 'FAC-2026-000001', 'Issuance must assign the official invoice number.');
 expectInvoice($invoice->getSellerSnapshot()['siren'] === '123456789', 'Seller identity must be snapshotted.');
+expectInvoice($invoice->getDueDate()->format('Y-m-d') === '2026-11-29', 'Invoice due date must use the configured payment delay.');
 try {
-    $invoice->issue('FAC-2026-000002', new DateTimeImmutable('2026-10-30 12:01:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
+    $invoice->issue('FAC-2026-000002', new DateTimeImmutable('2026-10-30 12:01:00'), new DateTimeImmutable('2026-11-29 12:01:00'), $profile->toInvoiceSnapshot(), $customerSnapshot);
     throw new RuntimeException('An invoice was issued twice.');
 } catch (InvalidArgumentException) {
     // An issued invoice is immutable and cannot receive a second number.
