@@ -16,7 +16,7 @@
 
     <section class="card">
         <form method="post">
-            <input type="hidden" name="_token" value="{{ form_token }}">
+            <input type="hidden" name="_token" value="{{ csrf_token(csrf_token_id) }}">
             <p>
                 <label for="name">Nom / raison sociale *</label>
                 <input id="name" name="name" type="text" maxlength="180" required value="{{ is_edit ? third_party.name : '' }}">
