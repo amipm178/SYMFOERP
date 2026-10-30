@@ -19,23 +19,23 @@
             <input type="hidden" name="_token" value="{{ csrf_token(csrf_token_id) }}">
             <p>
                 <label for="name">Nom / raison sociale *</label>
-                <input id="name" name="name" type="text" maxlength="180" required value="{{ is_edit ? third_party.name : '' }}">
+                <input id="name" name="name" type="text" maxlength="180" required value="{{ form_values.name }}">
             </p>
             <p>
                 <label for="category">Catégorie *</label>
                 <select id="category" name="category" required>
-                    <option value="customer" {% if third_party.category == 'customer' %}selected{% endif %}>Client</option>
-                    <option value="prospect" {% if third_party.category == 'prospect' %}selected{% endif %}>Prospect</option>
-                    <option value="supplier" {% if third_party.category == 'supplier' %}selected{% endif %}>Fournisseur</option>
+                    <option value="customer" {% if form_values.category == 'customer' %}selected{% endif %}>Client</option>
+                    <option value="prospect" {% if form_values.category == 'prospect' %}selected{% endif %}>Prospect</option>
+                    <option value="supplier" {% if form_values.category == 'supplier' %}selected{% endif %}>Fournisseur</option>
                 </select>
             </p>
             <p>
                 <label for="email">E-mail</label>
-                <input id="email" name="email" type="email" maxlength="180" value="{{ third_party.email ?? '' }}">
+                <input id="email" name="email" type="email" maxlength="180" value="{{ form_values.email }}">
             </p>
             <p>
                 <label for="phone">Téléphone</label>
-                <input id="phone" name="phone" type="tel" maxlength="40" value="{{ third_party.phone ?? '' }}">
+                <input id="phone" name="phone" type="tel" maxlength="40" value="{{ form_values.phone }}">
             </p>
             <button type="submit">{{ is_edit ? 'Enregistrer les modifications' : 'Créer le tiers' }}</button>
         </form>
