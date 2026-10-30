@@ -20,6 +20,10 @@ class SalesOrderLine
     #[ORM\JoinColumn(name: 'order_id', nullable: false, onDelete: 'CASCADE')]
     private ?SalesOrder $order = null;
 
+    #[ORM\ManyToOne(targetEntity: Product::class)]
+    #[ORM\JoinColumn(name: 'product_id', nullable: true, onDelete: 'RESTRICT')]
+    private ?Product $product = null;
+
     #[ORM\Column(length: 255)]
     private string $description;
 
@@ -35,8 +39,9 @@ class SalesOrderLine
     #[ORM\Column]
     private int $position;
 
-    public function __construct(string $description, string $quantity, string $unitPrice, string $vatRate, int $position)
+    public function __construct(string $description, string $quantity, string $unitPrice, string $vatRate, int $position, ?Product $product = null)
     {
+        $this->product = $product;
         $this->description = $description;
         $this->quantity = $quantity;
         $this->unitPrice = $unitPrice;
@@ -46,6 +51,7 @@ class SalesOrderLine
     public function getId(): ?int { return $this->id; }
     public function setOrder(SalesOrder $order): self { $this->order = $order; return $this; }
     public function getDescription(): string { return $this->description; }
+    public function getProduct(): ?Product { return $this->product; }
     public function getQuantity(): string { return $this->quantity; }
     public function getUnitPrice(): string { return $this->unitPrice; }
     public function getVatRate(): string { return $this->vatRate; }
