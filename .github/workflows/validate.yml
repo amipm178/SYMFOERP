@@ -126,7 +126,7 @@ jobs:
               "city": "La Rochelle", "country": "France", "siren": "123456789",
               "siret": "12345678900012", "paymentTerms": "Paiement à 30 jours",
               "latePenaltyRate": "Taux légal applicable", "recoveryFee": "40.00",
-              "vatRegimeNote": "TVA selon régime applicable",
+              "vatRegimeNote": "TVA selon régime applicable", "paymentDelayDays": "30",
               "_token": settings_parser.token,
           }).encode()))
           quote_form = client.open(base + "/sales/quotes/new").read().decode()
