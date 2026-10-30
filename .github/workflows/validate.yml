@@ -39,7 +39,7 @@ jobs:
       - name: Smoke test Symfony HTTP application
         run: |
           set -eu
-          docker run --detach --rm --name symfoerp-symfony-smoke -p 127.0.0.1:8000:8000 symfoerp-symfony:ci
+          docker run --detach --rm --name symfoerp-symfony-smoke -e APP_ENV=dev -e APP_DEBUG=1 -e APP_SECRET=ci-smoke-test-secret -p 127.0.0.1:8000:8000 symfoerp-symfony:ci
           cleanup() {
             docker stop symfoerp-symfony-smoke >/dev/null 2>&1 || true
           }
