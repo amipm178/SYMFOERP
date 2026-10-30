@@ -6,8 +6,10 @@ namespace App\Controller;
 
 use App\Entity\SalesQuote;
 use App\Entity\SalesQuoteLine;
+use App\Entity\SalesOrder;
 use App\Entity\ThirdParty;
 use App\Repository\SalesQuoteRepository;
+use App\Repository\SalesOrderRepository;
 use App\Repository\ThirdPartyRepository;
 use DateTimeImmutable;
 use Dompdf\Dompdf;
@@ -140,6 +142,34 @@ final class SalesQuoteController extends AbstractController
             'line_values' => $lineValues,
             'errors' => $errors,
         ]);
+    }
+
+    #[Route('/{id}/convert', name: 'app_sales_quote_convert', requirements: ['id' => '\\d+'], methods: ['POST'])]
+    public function convertToOrder(Request $request, SalesQuote $quote, SalesOrderRepository $orders, EntityManagerInterface $entityManager): Response
+    {
+        if (!$this->isCsrfTokenValid('sales_quote_convert_'.$quote->getId(), (string) $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Jeton de sécurité invalide.');
+        }
+        if ($quote->getStatus() !== SalesQuote::STATUS_ACCEPTED) {
+            throw $this->createAccessDeniedException('Seul un devis accepté peut être converti en commande.');
+        }
+
+        $existing = $orders->findOneBy(['sourceQuote' => $quote]);
+        if ($existing instanceof SalesOrder) {
+            $this->addFlash('success', 'Ce devis a déjà été converti en commande.');
+            return $this->redirectToRoute('app_sales_order_show', ['id' => $existing->getId()]);
+        }
+
+        $order = new SalesOrder($quote);
+        $entityManager->getConnection()->transactional(static function () use ($entityManager, $order): void {
+            $entityManager->persist($order);
+            $entityManager->flush();
+            $order->assignNumber();
+            $entityManager->flush();
+        });
+
+        $this->addFlash('success', sprintf('La commande %s a été créée à partir du devis.', $order->getNumber()));
+        return $this->redirectToRoute('app_sales_order_show', ['id' => $order->getId()]);
     }
 
     #[Route('/{id}/pdf', name: 'app_sales_quote_pdf', requirements: ['id' => '\\d+'], methods: ['GET'])]
