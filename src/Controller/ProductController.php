@@ -63,7 +63,7 @@ final class ProductController extends AbstractController
         return $this->render('product/form.html.twig', ['product' => $product, 'values' => $values, 'errors' => $errors, 'is_edit' => false, 'token_id' => 'product_create']);
     }
 
-    #[Route('/{id}', name: 'app_product_show', requirements: ['id' => '\\\\d+'], methods: ['GET'])]
+    #[Route('/{id}', name: 'app_product_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
     public function show(Product $product, EntityManagerInterface $em): Response
     {
         return $this->render('product/show.html.twig', [
@@ -72,7 +72,7 @@ final class ProductController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/edit', name: 'app_product_edit', requirements: ['id' => '\\\\d+'], methods: ['GET', 'POST'])]
+    #[Route('/{id}/edit', name: 'app_product_edit', requirements: ['id' => '\\d+'], methods: ['GET', 'POST'])]
     public function edit(Request $request, Product $product, ProductRepository $products, EntityManagerInterface $em): Response
     {
         $tokenId = 'product_edit_'.$product->getId();
@@ -99,7 +99,7 @@ final class ProductController extends AbstractController
         return $this->render('product/form.html.twig', ['product' => $product, 'values' => $values, 'errors' => $errors, 'is_edit' => true, 'token_id' => $tokenId]);
     }
 
-    #[Route('/{id}/stock', name: 'app_product_stock', requirements: ['id' => '\\\\d+'], methods: ['POST'])]
+    #[Route('/{id}/stock', name: 'app_product_stock', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function adjustStock(Request $request, Product $product, EntityManagerInterface $em): Response
     {
         if (!$this->isCsrfTokenValid('product_stock_'.$product->getId(), (string) $request->request->get('_token'))) {
@@ -122,7 +122,7 @@ final class ProductController extends AbstractController
         return $this->redirectToRoute('app_product_show', ['id' => $product->getId()]);
     }
 
-    #[Route('/{id}/archive', name: 'app_product_archive', requirements: ['id' => '\\\\d+'], methods: ['POST'])]
+    #[Route('/{id}/archive', name: 'app_product_archive', requirements: ['id' => '\\d+'], methods: ['POST'])]
     public function archive(Request $request, Product $product, EntityManagerInterface $em): Response
     {
         if (!$this->isCsrfTokenValid('product_archive_'.$product->getId(), (string) $request->request->get('_token'))) {
