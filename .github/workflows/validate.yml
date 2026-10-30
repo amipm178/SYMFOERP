@@ -51,6 +51,9 @@ jobs:
       - name: Test supplier purchase orders and receipts
         run: docker run --rm symfoerp-symfony:ci php tests/purchase_order_entity_smoke.php
 
+      - name: Test supplier invoice and outgoing payment rules
+        run: docker run --rm symfoerp-symfony:ci php tests/supplier_invoice_entity_smoke.php
+
       - name: Smoke test Symfony HTTP application
         run: |
           set -eu
