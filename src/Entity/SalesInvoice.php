@@ -155,7 +155,7 @@ class SalesInvoice
 
     public function getEffectiveStatus(?DateTimeImmutable $today = null): string
     {
-        if ($this->status === self::STATUS_ISSUED && $this->getRemainingAmount() > 0 && $this->dueDate < ($today ?? new DateTimeImmutable('today'))) {
+        if (in_array($this->status, [self::STATUS_ISSUED, self::STATUS_PARTIALLY_PAID], true) && $this->getRemainingAmount() > 0 && $this->dueDate < ($today ?? new DateTimeImmutable('today'))) {
             return self::STATUS_OVERDUE;
         }
         return $this->status;
