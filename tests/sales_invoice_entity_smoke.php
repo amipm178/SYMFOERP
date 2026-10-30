@@ -41,6 +41,7 @@ $profile->update([
     'legalName' => 'Société de test', 'address' => '1 rue du Test',
     'postalCode' => '17000', 'city' => 'La Rochelle', 'country' => 'France',
     'siren' => '123456789', 'siret' => '12345678900012',
+    'paymentTerms' => 'Paiement à 30 jours', 'latePenaltyRate' => 'Taux légal applicable', 'recoveryFee' => '40.00',
 ]);
 expectInvoice($profile->getInvoiceReadinessErrors() === [], 'Complete seller profile must be ready for invoice issuance.');
 $customerSnapshot = ['name' => 'Client facture test', 'address' => '2 rue Client', 'postal_code' => '17000', 'city' => 'La Rochelle'];
