@@ -30,7 +30,8 @@
                 ['paymentTerms','Conditions et délai de paiement *',profile.paymentTerms,'text'],
                 ['latePenaltyRate','Taux des pénalités de retard *',profile.latePenaltyRate,'text'],
                 ['recoveryFee','Indemnité forfaitaire de recouvrement (€) *',profile.recoveryFee,'text'],
-                ['vatRegimeNote','Mention relative au régime de TVA *',profile.vatRegimeNote,'text']
+                ['vatRegimeNote','Mention relative au régime de TVA *',profile.vatRegimeNote,'text'],
+                ['paymentDelayDays','Délai de paiement en jours (0 à 365)',profile.paymentDelayDays,'number']
             ] %}
             {% for field in fields %}
                 <p><label for="{{ field[0] }}">{{ field[1] }}</label><input id="{{ field[0] }}" name="{{ field[0] }}" type="{{ field[3] }}" value="{{ field[2] ?? '' }}" {% if field[0] == 'siren' %}maxlength="9" inputmode="numeric"{% elseif field[0] == 'siret' %}maxlength="14" inputmode="numeric"{% endif %}></p>
