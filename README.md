@@ -137,3 +137,8 @@ symfony server:start
 ## Licence
 
 Dolibarr est distribué sous **GNU GPL-3.0-or-later**. Le sous-module officiel conserve ses notices. Consulter `dolibarr/COPYRIGHT` et `dolibarr/COPYING` pour les licences des composants embarqués.
+
+
+## Catalogue produits et stock
+
+Le module **Produits** permet de gérer les références SKU uniques, désignations, descriptions, unités, prix d’achat et de vente HT, taux de TVA et activation/archivage. La liste propose recherche, pagination, filtre actif/archivé et alertes de seuil de stock. Le suivi de stock est optionnel par produit. Les entrées et sorties sont enregistrées comme mouvements horodatés (réception achat, sortie vente, retour, perte/casse, correction) avec motif et commentaire. Chaque mouvement est protégé par CSRF et verrouillage transactionnel ; une sortie qui rendrait le stock négatif est refusée. Les produits archivés et leur historique sont conservés. La migration `Version20261030181300` crée les tables `app_product` et `app_product_stock_movement` dans la base Symfony.
