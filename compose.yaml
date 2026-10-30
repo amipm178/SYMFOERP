@@ -14,7 +14,7 @@ services:
       db_symfony:
         condition: service_healthy
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - symfony_var:/app/var
     networks:
@@ -68,7 +68,7 @@ services:
       PHP_INI_UPLOAD_MAX_FILESIZE: 64M
       PHP_INI_POST_MAX_SIZE: 66M
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     volumes:
       - dolibarr_documents:/var/www/documents
       - dolibarr_custom:/var/www/html/custom
