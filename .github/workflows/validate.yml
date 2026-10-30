@@ -156,7 +156,11 @@ jobs:
           status_payload = urllib.parse.urlencode({"_token": quote_parser.token, "status": "sent"}).encode()
           sent_response = client.open(urllib.request.Request(base + "/sales/quotes/" + quote_id_match.group(1) + "/status", data=status_payload))
           assert "Envoyé" in sent_response.read().decode(), "Quote status transition to sent failed"
-          print("Symfony authentication, third-party registry, sales quote creation, VAT totals and status transition passed.")
+          pdf_response = client.open(base + "/sales/quotes/" + quote_id_match.group(1) + "/pdf")
+          pdf_content = pdf_response.read()
+          assert pdf_response.headers.get_content_type() == "application/pdf", "Quote PDF route returned the wrong content type"
+          assert pdf_content.startswith(b"%PDF-"), "Quote PDF route did not return a valid PDF document"
+          print("Symfony authentication, third-party registry, quote creation, VAT totals, status transition and PDF export passed.")
           PY
 
       - name: Smoke test fresh Dolibarr installation
