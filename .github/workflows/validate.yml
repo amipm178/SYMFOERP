@@ -47,7 +47,9 @@ jobs:
           for attempt in $(seq 1 30); do
             if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
               grep -q "Tiers &amp; CRM\\|Tiers & CRM" /tmp/symfoerp-home.html
-              echo "Symfony dashboard responded successfully."
+              curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/healthz --output /tmp/symfoerp-health.json
+              grep -q '"status":"ok"' /tmp/symfoerp-health.json
+              echo "Symfony dashboard and health endpoint responded successfully."
               exit 0
             fi
             sleep 2
