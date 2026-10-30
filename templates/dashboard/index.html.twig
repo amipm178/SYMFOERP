@@ -1,0 +1,18 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord · SYMFOERP{% endblock %}
+
+{% block body %}
+    <p class="muted">ESPACE DE TRAVAIL</p>
+    <h1>Tableau de bord</h1>
+    <p class="muted">Le socle SYMFOERP est en place. Les modules métier seront développés progressivement.</p>
+    <section class="grid" aria-label="Modules ERP">
+        {% for module in modules %}
+            <article class="card">
+                <h2>{{ module.name }}</h2>
+                <p class="muted">{{ module.description }}</p>
+                <span class="status">{{ module.status }}</span>
+            </article>
+        {% endfor %}
+    </section>
+{% endblock %}

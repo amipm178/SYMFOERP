@@ -1,0 +1,10 @@
+/.env.local
+/.env.*.local
+/.phpunit.cache/
+/.phpunit.result.cache/
+/.idea/
+/.vscode/
+/var/
+/vendor/
+/public/bundles/
+/public/build/
