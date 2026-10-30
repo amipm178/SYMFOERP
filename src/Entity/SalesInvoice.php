@@ -117,7 +117,8 @@ class SalesInvoice
     {
         if ($payment->getInvoice() !== $this) {
             throw new InvalidArgumentException('Payment belongs to another invoice.');
-        }\n        if ($this->status !== self::STATUS_ISSUED && $this->status !== self::STATUS_PARTIALLY_PAID) {
+        }
+        if ($this->status !== self::STATUS_ISSUED && $this->status !== self::STATUS_PARTIALLY_PAID) {
             throw new InvalidArgumentException('Only issued invoices can receive payments.');
         }
         if ($this->getRemainingAmount() <= 0) {
