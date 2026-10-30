@@ -31,7 +31,12 @@
 
     <section class="card" aria-label="Liste des tiers">
         {% if third_parties is empty %}
-            <p>Aucun tiers ne correspond à votre recherche.</p>
+            {% if search == '' and selected_category == '' %}
+                <p>Aucun tiers enregistré dans Symfony.</p>
+                <p class="muted">La base Symfony est prête à recevoir ses premières fiches.</p>
+            {% else %}
+                <p>Aucun tiers ne correspond à votre recherche.</p>
+            {% endif %}
         {% else %}
             {% set category_labels = {'customer': 'Client', 'prospect': 'Prospect', 'supplier': 'Fournisseur'} %}
             <div class="table-scroll">
