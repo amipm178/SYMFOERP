@@ -1,0 +1,102 @@
+services:
+  symfony:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: symfoerp-symfony
+    restart: unless-stopped
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET in .env.docker}
+      DATABASE_URL: "mysql://${SYMFONY_DB_USER}:${SYMFONY_DB_PASSWORD}@db_symfony:3306/${SYMFONY_DB_NAME}?serverVersion=mariadb-11.4.2&charset=utf8mb4"
+    depends_on:
+      db_symfony:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - symfony_var:/app/var
+    networks:
+      - symfony_net
+
+  db_symfony:
+    image: mariadb:11.4
+    container_name: symfoerp-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${SYMFONY_DB_NAME}
+      MARIADB_USER: ${SYMFONY_DB_USER}
+      MARIADB_PASSWORD: ${SYMFONY_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${SYMFONY_DB_ROOT_PASSWORD}
+    volumes:
+      - symfony_database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - symfony_net
+
+  dolibarr:
+    image: dolibarr/dolibarr:24.0.2-php8.5
+    container_name: symfoerp-dolibarr
+    restart: unless-stopped
+    depends_on:
+      db_dolibarr:
+        condition: service_healthy
+    environment:
+      DOLI_DB_TYPE: mysqli
+      DOLI_DB_HOST: db_dolibarr
+      DOLI_DB_HOST_PORT: 3306
+      DOLI_DB_NAME: ${DOLI_DB_NAME}
+      DOLI_DB_USER: ${DOLI_DB_USER}
+      DOLI_DB_PASSWORD: ${DOLI_DB_PASSWORD}
+      DOLI_URL_ROOT: http://localhost:8080
+      DOLI_ADMIN_LOGIN: ${DOLI_ADMIN_LOGIN}
+      DOLI_ADMIN_PASSWORD: ${DOLI_ADMIN_PASSWORD}
+      DOLI_INSTANCE_UNIQUE_ID: ${DOLI_INSTANCE_UNIQUE_ID}
+      DOLI_CRON: "0"
+      DOLI_CRON_KEY: ${DOLI_CRON_KEY}
+      DOLI_INIT_DEMO: "0"
+      DOLI_PROD: "1"
+    ports:
+      - "8080:80"
+    volumes:
+      - dolibarr_documents:/var/www/documents
+      - dolibarr_custom:/var/www/html/custom
+    networks:
+      - dolibarr_net
+
+  db_dolibarr:
+    image: mariadb:11.4
+    container_name: symfoerp-dolibarr-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: ${DOLI_DB_NAME}
+      MARIADB_USER: ${DOLI_DB_USER}
+      MARIADB_PASSWORD: ${DOLI_DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DOLI_DB_ROOT_PASSWORD}
+    volumes:
+      - dolibarr_database:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - dolibarr_net
+
+volumes:
+  symfony_var:
+  symfony_database:
+  dolibarr_database:
+  dolibarr_documents:
+  dolibarr_custom:
+
+networks:
+  symfony_net:
+  dolibarr_net:

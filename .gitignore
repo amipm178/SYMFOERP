@@ -8,3 +8,4 @@
 /vendor/
 /public/bundles/
 /public/build/
+\n# Docker local secrets\n.env.docker\n

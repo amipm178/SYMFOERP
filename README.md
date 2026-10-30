@@ -1,65 +1,87 @@
 # SYMFOERP
 
-Socle ERP construit avec **Symfony 7.4 LTS** et intégrant le cœur officiel de **Dolibarr ERP/CRM** comme sous-module Git.
+Socle ERP basé sur **Symfony 7.4 LTS** et intégrant le cœur officiel **Dolibarr 24.0.2**.
 
 ## Architecture
 
-- `/` : application Symfony (tableau de bord et futurs services métier).
-- `/dolibarr` : dépôt officiel Dolibarr, épinglé sur la version **24.0.2**.
-- Dolibarr conserve son cycle d'installation, son noyau PHP, ses modules et son schéma de base de données. Il n'est pas chargé comme un bundle Symfony.
+- `/` : application Symfony (tableau de bord et services métier).
+- `/dolibarr` : code source Dolibarr officiel, référencé comme sous-module Git sur le commit de la version 24.0.2.
+- `compose.yaml` : environnement Docker de développement.
+- Symfony et Dolibarr sont exécutés dans des conteneurs séparés, avec des bases MariaDB distinctes. Ils ne partagent ni kernel, ni sessions, ni schéma SQL.
 
-Cette séparation évite de mélanger les deux kernels, les sessions et les mécanismes d'installation. Une intégration plus profonde pourra ensuite passer par l'API REST Dolibarr ou un adaptateur dédié.
+## Démarrage avec Docker
 
-## Récupérer le code Dolibarr
-
-Après clonage du projet :
+Prérequis : Docker Engine et Docker Compose v2.
 
 ```bash
 git clone https://github.com/amipm178/SYMFOERP.git
 cd SYMFOERP
 git submodule update --init --recursive
+cp .env.docker.example .env.docker
 ```
 
-Le sous-module est épinglé sur le commit officiel correspondant à Dolibarr 24.0.2. Pour vérifier :
+Modifiez impérativement les mots de passe et secrets de `.env.docker`, puis lancez :
 
 ```bash
-git -C dolibarr describe --tags --always
+docker compose --env-file .env.docker up -d --build
+docker compose --env-file .env.docker ps
+docker compose --env-file .env.docker logs -f
 ```
 
-## Installer Symfony
+Accès locaux :
+
+- Symfony : http://localhost:8000
+- Assistant d'installation Dolibarr : http://localhost:8080
+
+Le conteneur Dolibarr initialise sa base dédiée au premier démarrage. Utilisez les identifiants administrateur définis par `DOLI_ADMIN_LOGIN` et `DOLI_ADMIN_PASSWORD` dans `.env.docker`. Changez-les avant le premier lancement.
+
+Arrêt sans supprimer les données :
+
+```bash
+docker compose --env-file .env.docker down
+```
+
+Pour supprimer également les bases et les documents persistants (opération destructive) :
+
+```bash
+docker compose --env-file .env.docker down -v
+```
+
+## Données persistantes et isolation
+
+Docker crée des volumes séparés pour :
+- la base Symfony ;
+- la base Dolibarr ;
+- les documents téléversés dans Dolibarr ;
+- les modules personnalisés Dolibarr ;
+- le cache et les fichiers temporaires Symfony.
+
+Les bases de données ne sont pas publiées sur les ports de l'hôte. Chaque application ne rejoint que son propre réseau Docker.
+
+## Installation sans Docker
+
+### Symfony
 
 Prérequis : PHP 8.2+, Composer 2 et les extensions PHP nécessaires.
 
 ```bash
 composer install
 cp .env .env.local
-```
-
-Renseigner `DATABASE_URL` et `APP_SECRET` dans `.env.local`, puis :
-
-```bash
+# Renseigner DATABASE_URL et APP_SECRET dans .env.local
 php bin/console cache:clear
 symfony server:start
 ```
 
-## Installer Dolibarr
+### Dolibarr
 
-Dolibarr doit être servi par PHP avec un document root pointant vers `dolibarr/htdocs` (ou via un virtual host dédié). Il est recommandé de le publier sur un hôte ou un préfixe isolé, par exemple `erp.example.test`, plutôt que de faire exécuter ses scripts PHP à travers le kernel Symfony.
-
-1. Configurer un serveur web PHP (Apache ou Nginx) dont le document root est `<chemin-du-projet>/dolibarr/htdocs`.
-2. Créer le fichier de configuration vide `dolibarr/htdocs/conf/conf.php` et accorder temporairement au serveur web le droit d'écriture sur ce fichier et sur le répertoire de documents Dolibarr.
-3. Ouvrir l'URL `/install/` sur le virtual host Dolibarr et suivre l'assistant.
-4. Utiliser une base de données dédiée à Dolibarr (MariaDB/MySQL ou PostgreSQL), distincte de celle de Symfony.
-5. À la fin de l'installation, retirer les droits d'écriture non nécessaires et appliquer les recommandations de sécurité de Dolibarr.
-
-Ne jamais committer `conf.php`, les secrets, les documents téléversés ou les données de production.
+Pour une installation manuelle, configurer un serveur web PHP dont le document root pointe vers `dolibarr/htdocs`, puis suivre l'assistant Dolibarr sur le virtual host dédié. Utiliser une base de données indépendante de celle de Symfony.
 
 ## Licence
 
-Dolibarr est distribué sous **GNU GPL-3.0-or-later**. Le code source et ses notices de licence sont conservés dans le sous-module officiel. Les dépendances embarquées peuvent avoir leurs propres licences : consulter `dolibarr/COPYRIGHT` et `dolibarr/COPYING`.
+Dolibarr est distribué sous **GNU GPL-3.0-or-later**. Le code source et ses notices sont conservés dans le sous-module officiel. Les composants embarqués peuvent avoir leurs propres licences : consulter `dolibarr/COPYRIGHT` et `dolibarr/COPYING`.
 
-Le code propre à SYMFOERP reste séparé du sous-module ; toute redistribution d'une œuvre combinant ou modifiant Dolibarr doit être examinée au regard de la GPL et des licences des composants inclus.
+Le code propre à SYMFOERP reste séparé du sous-module. Toute redistribution d'une œuvre combinant ou modifiant Dolibarr doit être examinée au regard de la GPL et des licences des composants inclus.
 
 ## État
 
-Le code source Dolibarr est référencé dans Git. L'installation web, la configuration de la base de données et les tests d'exécution doivent encore être réalisés dans l'environnement de déploiement.
+La configuration Docker et les instructions de démarrage sont versionnées. Les conteneurs n'ont pas été démarrés depuis cet environnement : l'installation réelle, la migration de base, et les tests HTTP doivent être validés sur une machine disposant de Docker.
