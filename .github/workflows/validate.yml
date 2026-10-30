@@ -46,7 +46,7 @@ jobs:
           trap cleanup EXIT
           for attempt in $(seq 1 30); do
             if curl --connect-timeout 2 --max-time 5 --fail --silent --show-error http://127.0.0.1:8000/ --output /tmp/symfoerp-home.html; then
-              grep -q "Tiers &amp; CRM\|Tiers & CRM" /tmp/symfoerp-home.html
+              grep -q "Tiers &amp; CRM\\|Tiers & CRM" /tmp/symfoerp-home.html
               echo "Symfony dashboard responded successfully."
               exit 0
             fi
@@ -54,4 +54,25 @@ jobs:
           done
           docker logs symfoerp-symfony-smoke
           echo "Symfony HTTP smoke test failed." >&2
+          exit 1
+
+      - name: Smoke test fresh Dolibarr installation
+        run: |
+          set -eu
+          cleanup() {
+            docker compose --env-file .env.docker down --volumes --remove-orphans >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker compose --env-file .env.docker up --detach db_dolibarr dolibarr
+          for attempt in $(seq 1 60); do
+            if curl --connect-timeout 2 --max-time 5 --fail --silent http://127.0.0.1:8080/ --output /tmp/symfoerp-dolibarr.html; then
+              if grep -qi "Dolibarr" /tmp/symfoerp-dolibarr.html; then
+                echo "Fresh Dolibarr installation responded successfully."
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          docker compose --env-file .env.docker logs dolibarr db_dolibarr
+          echo "Fresh Dolibarr HTTP smoke test failed." >&2
           exit 1
