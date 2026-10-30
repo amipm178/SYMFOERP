@@ -24,7 +24,7 @@ final class Version20261030130000 extends AbstractMigration
                 password VARCHAR(255) NOT NULL,
                 UNIQUE INDEX uniq_app_user_email (email),
                 PRIMARY KEY(id)
-            ) DEFAULT CHARACTER SET utf8mb4 COLLATE \`utf8mb4_unicode_ci\` ENGINE = InnoDB
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci\` ENGINE = InnoDB
             SQL);
     }
 
