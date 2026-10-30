@@ -135,8 +135,17 @@ final class SalesInvoiceController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_sales_invoice_show', requirements: ['id' => '\\d+'], methods: ['GET'])]
-    public function show(SalesInvoice $invoice): Response
+    public function show(SalesInvoice $invoice, EntityManagerInterface $entityManager): Response
     {
-        return $this->render('sales_invoice/show.html.twig', ['invoice' => $invoice]);
+        $profile = $entityManager->find(CompanyProfile::class, 1);
+        $issueErrors = $profile instanceof CompanyProfile ? $profile->getInvoiceReadinessErrors() : ['Configurez l’identité légale de l’entreprise.'];
+        $customer = $invoice->getCustomer();
+        if (!$customer->getAddress() || !$customer->getPostalCode() || !$customer->getCity() || !$customer->getCountry()) {
+            $issueErrors[] = 'Complétez l’adresse de facturation du client.';
+        }
+        return $this->render('sales_invoice/show.html.twig', [
+            'invoice' => $invoice,
+            'issue_errors' => $issueErrors,
+        ]);
     }
 }
