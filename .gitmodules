@@ -1,0 +1,4 @@
+[submodule "dolibarr"]
+	path = dolibarr
+	url = https://github.com/Dolibarr/dolibarr.git
+	branch = 24.0
